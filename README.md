@@ -20,8 +20,8 @@ pnpm build
 ```
 
 ### 기술 스택
-React (with Vite) – 빠른 프론트엔드 빌드 도구
-JavaScript – 주요 개발 언어
-Antd – UI 구성요소 라이브러리
-Zustand – 전역 상태 관리 라이브러리
-PNPM – 빠르고 효율적인 패키지 매니저
+- React (with Vite) – 빠른 프론트엔드 빌드 도구
+- JavaScript – 주요 개발 언어
+- Antd – UI 구성요소 라이브러리
+- Zustand – 전역 상태 관리 라이브러리
+- PNPM – 빠르고 효율적인 패키지 매니저
