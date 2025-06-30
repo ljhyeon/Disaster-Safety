@@ -1,11 +1,10 @@
-import { Layout, Typography, Input, Button, Form, Space, message } from 'antd'
+import { Layout, Input, Button, Form, Space, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { COLORS } from '../styles/colors'
 
 import { Logo } from '../components/login/Logo'
 
 const { Content } = Layout
-const { Title, Text } = Typography
 
 const Login = () => {
     const navigate = useNavigate()
@@ -46,7 +45,6 @@ const Login = () => {
                     style={{ width: '380px' }}
                 >
                     <Form.Item
-                        label="아이디"
                         name="user_id"
                         rules={[{ required: true, message: '아이디를 입력하세요.' }]}
                     >
@@ -54,7 +52,6 @@ const Login = () => {
                     </Form.Item>
 
                     <Form.Item
-                        label="비밀번호"
                         name="password"
                         rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}
                     >
