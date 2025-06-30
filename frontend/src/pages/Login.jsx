@@ -2,6 +2,8 @@ import { Layout, Typography, Input, Button, Form, Space, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { COLORS } from '../styles/colors'
 
+import { Logo } from '../components/login/Logo'
+
 const { Content } = Layout
 const { Title, Text } = Typography
 
@@ -9,7 +11,7 @@ const Login = () => {
     const navigate = useNavigate()
 
     const onLogin = async (values) => {
-        const { user_id, password } = values
+        // const { user_id, password } = values
         try {
             // ✅ 여기에 실제 로그인 API 요청 예정 - api 폴더에 구현해서 들고오기
             // const response = await loginService.login({ username, password })
@@ -35,14 +37,7 @@ const Login = () => {
                     flexDirection: 'column',
                 }}
             >
-                <div style={{ textAlign: 'center',}}>
-                    <Title level={1}>
-                        이어드림
-                    </Title>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-                        재난상황 내 구호품 중계 플랫폼
-                    </Text>
-                </div>
+                <Logo />
 
                 <Form
                     layout="vertical"
