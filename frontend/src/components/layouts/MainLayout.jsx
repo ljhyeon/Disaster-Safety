@@ -33,10 +33,22 @@ export default function MainLayout() {
 
     return (
         <Layout style={{ height: '100vh', width: '100vw' }}>
-            <Sider breakpoint="lg" collapsedWidth="80" style={{ background: '#001529' }}>
+            <Sider 
+                breakpoint="lg" 
+                collapsedWidth="80" 
+                style={{ 
+                    background: '#001529',
+                    position: 'fixed',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    height: '100vh',
+                    zIndex: 1000
+                }}
+            >
                 <div
                     className="logo"
-                    style={{ height: 32, margin: 16, color: COLORS.gray2, fontSize: '24px', textAlign: 'center', }}
+                    style={{ height: 32, margin: 16, color: COLORS.gray2, fontSize: '24px', textAlign: 'center', cursor: 'pointer', }}
                     onClick={()=>{
                         navigate('/home')
                         setName('')
@@ -86,7 +98,7 @@ export default function MainLayout() {
                     </Button>
                 </div>
             </Sider>
-            <Layout>
+            <Layout style={{ marginLeft: 200 }}>
                 <Header style={{ background: '#fff', padding: 0, fontSize: '24px', paddingLeft: '20px' }}>
                     <Title level={2} style={{ color: COLORS.gray7 }}>
                         {name}
