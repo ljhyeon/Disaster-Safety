@@ -3,7 +3,7 @@ import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Home from './pages/Home'
 import Main from './pages/Main'
-import ProjectList from './pages/ProductList'
+import ProductList from './pages/ProductList'
 import AddProduct from './pages/AddProduct'
 import Setting from './pages/Setting'
 import EditSetting from './pages/EditSetting'
@@ -24,7 +24,7 @@ function App() {
         {/* ✅ MainLayout 적용 대상 */}
         <Route path="/" element={<MainLayout />}>
           <Route path="main/:id" element={<Main />} />
-          <Route path="list/:id" element={<ProjectList />} />
+          <Route path="list/:id" element={<ProductList />} />
           <Route path="add/:id" element={<AddProduct />} />
           <Route path="setting/:id" element={<Setting />} />
           <Route path="editsetting/:id" element={<EditSetting />} />
