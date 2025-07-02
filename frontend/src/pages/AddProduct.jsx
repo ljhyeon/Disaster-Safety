@@ -6,10 +6,7 @@ const { Title, } = Typography
 
 import { useShelterStore } from '../store/useShelterStore'
 
-const dummyData = [
-    '비슷한 규모의 대피소 기준, 생수가 100 개 부족합니다.',
-    '같은 재난이 발생하였을 때, 담요가 큰 도움이 되었다는 사례가 있습니다.',
-]
+import { recommendData } from '../dummydata/recommendData'
 
 const AddProduct = () => {
     const [form] = Form.useForm()
@@ -77,7 +74,7 @@ const AddProduct = () => {
             </Form>
 
             <Card title="구호품 현황">
-                <StatusList cnt={dummyData.length} data={dummyData} />
+                <StatusList cnt={recommendData.length} data={recommendData} />
             </Card>
         </>
     )

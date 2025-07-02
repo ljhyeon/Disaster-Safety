@@ -7,26 +7,14 @@ import 'leaflet/dist/leaflet.css'
 
 import { Layout, } from 'antd'
 
+import { markers } from '../dummydata/markerData'
+
 const customIcon = new L.Icon({
     iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -36],
 })
-
-const markers = [
-    {
-        name: '대구광역시청',
-        position: [35.8714, 128.6014],
-        description: '대구 중심부 관공서',
-    },
-    {
-        name: '대구 EXCO',
-        position: [35.9083, 128.6133],
-        description: '전시 및 물류 거점',
-    },
-]
-
 
 const Home = () => {
     const navigate = useNavigate()
