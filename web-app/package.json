@@ -15,8 +15,10 @@
     "@fontsource/pretendard": "^5.2.5",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "leaflet": "^1.9.4",
+    "react": "19.0.0-rc.1",
+    "react-dom": "19.0.0-rc.1",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
