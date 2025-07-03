@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
 
 export function Item({
@@ -26,7 +26,7 @@ export function Item({
             </Box>
 
             {showButton && (
-                <Box textAlign="center">
+                <Box display="grid" textAlign="center" width="90px">
                     <IconButton onClick={onButtonClick}>
                         <InventoryRoundedIcon />
                     </IconButton>
