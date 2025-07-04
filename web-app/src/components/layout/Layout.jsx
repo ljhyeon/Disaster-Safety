@@ -6,6 +6,8 @@ import Toolbar from '@mui/material/Toolbar';
 import { Box, BottomNavigation, BottomNavigationAction, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
+import LogoutConfirmDialog from '../LogoutCOnfirmDialog';
+
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
@@ -86,6 +88,37 @@ export function Layout({ description, children }) {
     const currentAppBarItem = appBarItems.find(item => item.value === value);
     const currentIconSrc = currentAppBarItem ? currentAppBarItem.src : '/supply.svg'; // 기본값
 
+    // 로그아웃 모달 상태
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+
+    // 로그아웃 취소 핸들러
+    const handleLogoutCancel = () => {
+        setIsLogoutDialogOpen(false);
+    };
+
+    // 로그아웃 확인 핸들러
+    const handleLogoutConfirm = async () => {
+        try {
+            // 3. 로그인 페이지로 이동
+            navigate('/login');
+            
+            // 4. 모달 닫기
+            setIsLogoutDialogOpen(false);
+            
+            console.log('🔥 완전한 로그아웃 처리 완료');
+        } catch (error) {
+            console.error('❌ 로그아웃 처리 중 오류:', error);
+            // 오류가 발생해도 강제로 로그아웃 처리
+            navigate('/login');
+            setIsLogoutDialogOpen(false);
+        }
+    };
+
+    // 로고 클릭 핸들러
+    const handleLogoClick = () => {
+        setIsLogoutDialogOpen(true);
+    };
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: '100vw' }}>
             {/* 상단바 영역 - 고정 위치 */}
@@ -120,6 +153,7 @@ export function Layout({ description, children }) {
                             },
                             transition: 'transform 0.2s ease-in-out',
                             }}
+                            onClick={handleLogoClick}
                         >
                             <img src={currentIconSrc} alt="current page icon" />
                         </IconButton>
@@ -172,6 +206,12 @@ export function Layout({ description, children }) {
                 );
             })}
             </BottomNavigation>
+
+            <LogoutConfirmDialog
+                open={isLogoutDialogOpen}
+                onClose={handleLogoutCancel}
+                onConfirm={handleLogoutConfirm}
+            />
         </Box>
     )
 }

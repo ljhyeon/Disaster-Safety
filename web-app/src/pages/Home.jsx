@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { MapContainer, TileLayer, Marker, Popup, } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, IconButton } from '@mui/material';
 import { markers } from '../dummydata/markerData';
+
+import LogoutConfirmDialog from '../components/LogoutCOnfirmDialog';
+
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 
 const customIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
@@ -21,6 +26,37 @@ export function Home() {
         navigate(`/supply/${id}`);
     };
 
+    // 로그아웃 모달 상태
+    const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+
+    // 로그아웃 취소 핸들러
+    const handleLogoutCancel = () => {
+        setIsLogoutDialogOpen(false);
+    };
+
+    // 로그아웃 확인 핸들러
+    const handleLogoutConfirm = async () => {
+        try {
+            // 3. 로그인 페이지로 이동
+            navigate('/login');
+            
+            // 4. 모달 닫기
+            setIsLogoutDialogOpen(false);
+            
+            console.log('🔥 완전한 로그아웃 처리 완료');
+        } catch (error) {
+            console.error('❌ 로그아웃 처리 중 오류:', error);
+            // 오류가 발생해도 강제로 로그아웃 처리
+            navigate('/login');
+            setIsLogoutDialogOpen(false);
+        }
+    };
+
+    // 로고 클릭 핸들러
+    const handleLogoClick = () => {
+        setIsLogoutDialogOpen(true);
+    };
+
     return (
         <Box
             sx={{
@@ -32,9 +68,32 @@ export function Home() {
                 backgroundColor: 'white',
             }}
         >
-            <Typography variant="h6" align="center" sx={{ mt: 2 }}>
-                대피소 현황 지도
-            </Typography>
+
+            <Box 
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    px: 2,
+                }}
+            >
+                {/* 좌측 공간을 차지해서 중앙 정렬 유지를 위해 추가 */}
+                <Box sx={{ width: 40 }} />
+
+                <Typography variant="h6" align="center" sx={{ mt: 2 }}>
+                    대피소 현황 지도
+                </Typography>
+                <IconButton
+                    edge="start"
+                    onClick={handleLogoClick}
+                    sx={{
+                        '&:hover': { backgroundColor: 'transparent' },
+                        mt: 2,
+                    }}
+                >
+                    <LogoutOutlinedIcon />
+                </IconButton>
+            </Box>
 
             <Box sx={{ flex: 1, mt: 1 }}>
                 <MapContainer
@@ -75,6 +134,12 @@ export function Home() {
                 ))}
                 </MapContainer>
             </Box>
+
+            <LogoutConfirmDialog
+                open={isLogoutDialogOpen}
+                onClose={handleLogoutCancel}
+                onConfirm={handleLogoutConfirm}
+            />
         </Box>
     )
 }
