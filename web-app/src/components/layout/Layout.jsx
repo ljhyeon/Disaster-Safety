@@ -1,5 +1,5 @@
 import { useState, useEffect, } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, } from 'react-router-dom';
 
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -13,15 +13,15 @@ import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 
+import { useShelterStore } from '../../store/shelterStore';
+
 export function Layout({ description, children }) {
+    const { shelterId } = useShelterStore(); // store에서 가져오기
+
     const theme = useTheme();
 
     const navigate = useNavigate();
     const location = useLocation();
-    const params = useParams();
-
-     // 현재 경로에서 ID 추출
-    const currentId = params.id;
 
      // 현재 경로에 맞춰 value 상태 초기화 (ID 제외한 경로 기준)
     const getValueFromPath = (pathname) => {
@@ -46,13 +46,13 @@ export function Layout({ description, children }) {
         // value에 따라 경로로 이동
         switch (newValue) {
         case 'supply':
-            navigate(`/supply/${currentId}`);
+            navigate(`/supply/${shelterId}`);
             break;
         case 'status':
-            navigate(`/status/${currentId}`);
+            navigate(`/status/${shelterId}`);
             break;
         case 'setting':
-            navigate(`/setting/${currentId}`);
+            navigate(`/setting/${shelterId}`);
             break;
         default:
             break;

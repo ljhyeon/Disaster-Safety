@@ -1,42 +1,56 @@
 import { useState } from "react";
 
 import { Item } from "../components/Item"
-
-import { demandData } from "../dummydata/DemandData"
 import { InfoDialog } from "../components/InfoDialog"
 import { CheckDialog } from "../components/CheckDialog";
 
-const info = {
-        shelter: '땡땡대피소',
-        address: '대구광역시 어디어디 어디어디',
-        item: '생수',
-        quantity: '50'
-    }
+import { demandData } from "../dummydata/DemandData";
+
+import { useShelterStore } from "../store/shelterStore";
 
 export function Supply() {
 
     const [open, setOpen] = useState(false);
     const [checkOpen, setCheckOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    const { shelterId, shelterName, shelterAddress, addDonation } = useShelterStore();
 
     const handleSubmit = () => {
-        console.log('전송');
+        if (selectedItem) {
+            // 기부 정보를 store에 저장
+            const donationInfo = {
+                shelterId: shelterId,
+                shelterName: shelterName,
+                shelterAddress: shelterAddress,
+                item: selectedItem.title,
+                quantity: selectedItem.quantity,
+                description: selectedItem.description,
+                donatedAt: new Date().toISOString()
+            };
+            
+            addDonation(donationInfo);
+            console.log('기부 정보 저장:', donationInfo);
+        }
+        
         setOpen(false);
         setCheckOpen(true);
     }
 
-    const infoDialogOpen = () => {
+    const infoDialogOpen = (item) => {
+        setSelectedItem(item);
         setOpen(true);
     }
 
     return (
         <>
             {
-                demandData.map(({ title, description, location }, idx) => (
+                demandData.map((item, idx) => (
                     <Item
-                        title={title}
-                        description={description}
-                        location={location}
-                        onClick={infoDialogOpen}
+                        title={item.title}
+                        description={item.description}
+                        location={item.location}
+                        onClick={() => infoDialogOpen(item)}
                         key={idx}
                     />
                 ))
@@ -46,10 +60,10 @@ export function Supply() {
                 onClose={() => setOpen(false)}
                 onSubmit={handleSubmit}
                 title="요청 상세 정보"
-                shelter={info.shelter}
-                address={info.address}
-                item={info.item}
-                quantity={info.quantity}
+                shelter={shelterName}
+                address={shelterAddress}
+                item={selectedItem?.title || ''}
+                quantity={selectedItem?.quantity || ''}
             />
             <CheckDialog 
                 open={checkOpen}

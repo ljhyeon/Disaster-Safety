@@ -12,6 +12,8 @@ import LogoutConfirmDialog from '../components/LogoutCOnfirmDialog';
 
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 
+import { useShelterStore } from '../store/shelterStore';
+
 const customIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
   iconSize: [36, 36],
@@ -21,8 +23,10 @@ const customIcon = new L.Icon({
 
 export function Home() {
     const navigate = useNavigate();
+    const { setShelterInfo } = useShelterStore(); // 업데이트된 store 사용
 
-    const handleSelectId = (id) => {
+    const handleSelectId = (id, name, address) => {
+        setShelterInfo(id, name, address); // id, name, address 모두 저장
         navigate(`/supply/${id}`);
     };
 
@@ -124,7 +128,7 @@ export function Home() {
                                     variant="contained"
                                     size="small"
                                     sx={{ mt: 1, fontSize: 12 }}
-                                    onClick={() => handleSelectId(idx.toString(), marker.name)}
+                                    onClick={() => handleSelectId(marker.id.toString(), marker.name, marker.address)}
                                 >
                                     상세보기 →
                                 </Button>
