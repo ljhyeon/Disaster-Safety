@@ -1,4 +1,3 @@
-// components/DonationDialog.tsx
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box } from '@mui/material';
 
@@ -51,7 +50,6 @@ export function Form2Dialog({ open, onClose, onSubmit, label1 = '', label2 = '',
                 <Button
                     onClick={handleSubmit}
                     variant="contained"
-                    color="primary"
                     sx={{ margin: '0 auto', width: 120 }}
                 >
                     확인
