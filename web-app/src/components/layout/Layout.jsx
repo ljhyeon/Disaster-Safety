@@ -48,7 +48,7 @@ export function Layout({ description, children }) {
         // value에 따라 경로로 이동
         switch (newValue) {
         case 'supply':
-            navigate(`/supply/${shelterId}`);
+            navigate('/supply'); // 매칭 기능을 사용하므로 shelterId 불필요
             break;
         case 'status':
             navigate(`/status/${shelterId}`);

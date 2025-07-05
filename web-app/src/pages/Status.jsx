@@ -20,13 +20,17 @@ import {
     LocalShipping 
 } from '@mui/icons-material';
 
-import { getReliefSuppliesByUser, RELIEF_SUPPLY_STATUS } from '../services/reliefService';
+import { getReliefSuppliesByUser, updateSupplyTracking, RELIEF_SUPPLY_STATUS } from '../services/reliefService';
+import { TrackingDialog } from '../components/TrackingDialog';
 import { useAuthStore } from '../store/authStore';
 
 export function Status() {
     const [supplies, setSupplies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [trackingOpen, setTrackingOpen] = useState(false);
+    const [selectedSupply, setSelectedSupply] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
     
     const { user } = useAuthStore();
 
@@ -55,16 +59,48 @@ export function Status() {
         }
     };
 
+    // 송장번호 등록 모달 열기
+    const handleTrackingClick = (supply) => {
+        setSelectedSupply(supply);
+        setTrackingOpen(true);
+    };
+
+    // 송장번호 등록 처리
+    const handleTrackingSubmit = async (trackingData) => {
+        if (!selectedSupply) return;
+        
+        setSubmitting(true);
+        
+        try {
+            const result = await updateSupplyTracking(selectedSupply.id, trackingData);
+            if (result.success) {
+                setTrackingOpen(false);
+                setSelectedSupply(null);
+                alert('송장번호가 등록되었습니다.');
+                loadSupplies(); // 목록 새로고침
+            } else {
+                alert(`송장번호 등록 실패: ${result.error.message}`);
+            }
+        } catch (err) {
+            alert('송장번호 등록 중 오류가 발생했습니다.');
+            console.error('송장번호 등록 실패:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     // 상태별 색상 및 아이콘 매핑
     const getStatusInfo = (status) => {
         switch (status) {
-            case RELIEF_SUPPLY_STATUS.PENDING:
+            case 'pending':
                 return { color: 'warning', icon: <Pending />, label: '대기중' };
-            case RELIEF_SUPPLY_STATUS.CONFIRMED:
+            case 'confirmed':
                 return { color: 'info', icon: <CheckCircle />, label: '확인됨' };
-            case RELIEF_SUPPLY_STATUS.DELIVERED:
+            case 'shipped':
+                return { color: 'primary', icon: <LocalShipping />, label: '배송중' };
+            case 'delivered':
                 return { color: 'success', icon: <LocalShipping />, label: '전달완료' };
-            case RELIEF_SUPPLY_STATUS.CANCELLED:
+            case 'cancelled':
                 return { color: 'error', icon: <Cancel />, label: '취소됨' };
             default:
                 return { color: 'default', icon: <Pending />, label: status };
@@ -80,28 +116,31 @@ export function Status() {
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
-            });
+        });
     };
 
     // 통계 계산
     const statistics = supplies.reduce((acc, supply) => {
         acc.total++;
         switch (supply.status) {
-            case RELIEF_SUPPLY_STATUS.PENDING:
+            case 'pending':
                 acc.pending++;
                 break;
-            case RELIEF_SUPPLY_STATUS.CONFIRMED:
+            case 'confirmed':
                 acc.confirmed++;
                 break;
-            case RELIEF_SUPPLY_STATUS.DELIVERED:
+            case 'shipped':
+                acc.shipped++;
+                break;
+            case 'delivered':
                 acc.delivered++;
                 break;
-            case RELIEF_SUPPLY_STATUS.CANCELLED:
+            case 'cancelled':
                 acc.cancelled++;
                 break;
         }
         return acc;
-    }, { total: 0, pending: 0, confirmed: 0, delivered: 0, cancelled: 0 });
+    }, { total: 0, pending: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 });
 
     if (loading) {
         return (
@@ -151,9 +190,9 @@ export function Status() {
                         <Typography variant="h6" sx={{ mb: 2 }}>
                             공급 현황
                         </Typography>
-                        <Stack direction="row" spacing={3} divider={<Divider orientation="vertical" flexItem />}>
+                        <Stack direction="row" spacing={3} justifyContent="space-around">
                             <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="primary">
+                                <Typography variant="h4" color="primary.main">
                                     {statistics.total}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
@@ -169,11 +208,11 @@ export function Status() {
                                 </Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="info.main">
-                                    {statistics.confirmed}
+                                <Typography variant="h4" color="primary.main">
+                                    {statistics.shipped}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                    확인됨
+                                    배송중
                                 </Typography>
                             </Box>
                             <Box sx={{ textAlign: 'center' }}>
@@ -236,11 +275,11 @@ export function Status() {
                                             <Chip 
                                                 label={statusInfo.label}
                                                 color={statusInfo.color}
-                                                icon={statusInfo.icon}
                                                 size="small"
+                                                icon={statusInfo.icon}
                                             />
                                             <Typography variant="body2" color="text.secondary">
-                                                {supply.supplied_quantity} {supply.unit}
+                                                공급량: {supply.supplied_quantity} {supply.unit}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -262,6 +301,31 @@ export function Status() {
                                             요청량: {supply.requested_quantity} {supply.unit}
                                         </Typography>
                                     </Box>
+
+                                    {/* 송장 정보 표시 */}
+                                    {supply.courier_company && supply.tracking_number && (
+                                        <Box sx={{ mt: 2, p: 1, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                                            <Typography variant="body2" fontWeight="bold" color="primary">
+                                                배송 정보
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                택배사: {supply.courier_company} | 송장번호: {supply.tracking_number}
+                                            </Typography>
+                                        </Box>
+                                    )}
+
+                                    {/* 송장번호 등록 버튼 */}
+                                    {supply.status === 'pending' && (
+                                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                            <Button 
+                                                variant="contained" 
+                                                size="small"
+                                                onClick={() => handleTrackingClick(supply)}
+                                            >
+                                                송장번호 등록
+                                            </Button>
+                                        </Box>
+                                    )}
                                     
                                     {supply.supplier_message && (
                                         <Box sx={{ mt: 2, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
@@ -276,6 +340,18 @@ export function Status() {
                     })}
                 </Box>
             )}
+
+            {/* 송장번호 등록 다이얼로그 */}
+            <TrackingDialog
+                open={trackingOpen}
+                onClose={() => setTrackingOpen(false)}
+                onSubmit={handleTrackingSubmit}
+                shelter={selectedSupply?.shelter?.shelter_name}
+                item={selectedSupply?.item_name}
+                quantity={selectedSupply?.supplied_quantity}
+                unit={selectedSupply?.unit}
+                loading={submitting}
+            />
         </Box>
     );
 }
