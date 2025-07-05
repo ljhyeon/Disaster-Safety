@@ -6,7 +6,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { Box, BottomNavigation, BottomNavigationAction, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-import LogoutConfirmDialog from '../LogoutCOnfirmDialog';
+import LogoutConfirmDialog from '../LogoutConfirmDialog';
 
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
@@ -14,9 +14,11 @@ import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 
 import { useShelterStore } from '../../store/shelterStore';
+import { useAuthStore } from '../../store/authStore';
 
 export function Layout({ description, children }) {
     const { shelterId } = useShelterStore(); // store에서 가져오기
+    const { logout } = useAuthStore(); // 인증 스토어에서 로그아웃 함수 가져오기
 
     const theme = useTheme();
 
@@ -99,13 +101,17 @@ export function Layout({ description, children }) {
     // 로그아웃 확인 핸들러
     const handleLogoutConfirm = async () => {
         try {
-            // 3. 로그인 페이지로 이동
-            navigate('/login');
-            
-            // 4. 모달 닫기
-            setIsLogoutDialogOpen(false);
-            
-            console.log('🔥 완전한 로그아웃 처리 완료');
+            const result = await logout();
+            if (result.success) {
+                console.log('🔥 Firebase 로그아웃 성공');
+                navigate('/login');
+                setIsLogoutDialogOpen(false);
+            } else {
+                console.error('❌ 로그아웃 실패:', result.error);
+                // 실패해도 강제로 로그아웃 처리
+                navigate('/login');
+                setIsLogoutDialogOpen(false);
+            }
         } catch (error) {
             console.error('❌ 로그아웃 처리 중 오류:', error);
             // 오류가 발생해도 강제로 로그아웃 처리

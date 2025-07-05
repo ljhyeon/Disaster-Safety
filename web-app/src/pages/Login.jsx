@@ -3,27 +3,50 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, TextField, Typography } from '@mui/material';
 
 import { Logo } from '../components/Logo';
+import { signIn } from '../services/authService';
+import { useAuthStore } from '../store/authStore';
 
 export function Login() {
     const navigate = useNavigate();
-    const [id, setId] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const { setUser } = useAuthStore();
 
     const handleLogin = async () => {
         // 입력값 검증
-        if (!id || !password) {
-            setErrorMessage('아이디와 비밀번호를 모두 입력해주세요.');
+        if (!email || !password) {
+            setErrorMessage('이메일과 비밀번호를 모두 입력해주세요.');
             return;
         }
 
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setErrorMessage('올바른 이메일 형식을 입력해주세요.');
+            return;
+        }
+
+        setIsLoading(true);
+        setErrorMessage('');
+
         try {
-            console.log('로그인 성공:', { id, password });
-            // 실제 로그인 API 호출 코드 (axios 등) 추가 예정
-            navigate('/home');
+            const result = await signIn(email, password);
+            
+            if (result.success) {
+                setUser(result.user);
+                console.log('로그인 성공:', result.user);
+                navigate('/home');
+            } else {
+                setErrorMessage(result.error.message);
+            }
         } catch (error) {
             console.error('로그인 실패:', error);
-            setErrorMessage('로그인 실패. 다시 시도하세요.');
+            setErrorMessage('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,12 +69,14 @@ export function Login() {
             <Box width="85%" my={2}>
                 <TextField
                     fullWidth
-                    label="아이디"
+                    label="이메일"
+                    type="email"
                     variant="outlined"
                     margin="normal"
-                    value={id}
-                    onChange={(e) => setId(e.target.value)}
-                    error={Boolean(errorMessage && !id)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    error={Boolean(errorMessage && !email)}
+                    disabled={isLoading}
                 />
                 <TextField
                     fullWidth
@@ -62,6 +87,12 @@ export function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     error={Boolean(errorMessage && !password)}
+                    disabled={isLoading}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            handleLogin();
+                        }
+                    }}
                 />
 
                 {errorMessage && (
@@ -76,6 +107,7 @@ export function Login() {
                         variant="outlined"
                         onClick={() => navigate('/signup')}
                         sx={{ mr: 1 }}
+                        disabled={isLoading}
                     >
                         사용자 등록
                     </Button>
@@ -84,8 +116,9 @@ export function Login() {
                         variant="contained"
                         onClick={handleLogin}
                         sx={{ ml: 1 }}
+                        disabled={isLoading}
                     >
-                        로그인
+                        {isLoading ? '로그인 중...' : '로그인'}
                     </Button>
                 </Box>
             </Box>

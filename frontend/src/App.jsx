@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Spin } from 'antd'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Home from './pages/Home'
@@ -8,8 +10,40 @@ import AddProduct from './pages/AddProduct'
 import Setting from './pages/Setting'
 import EditSetting from './pages/EditSetting'
 import MainLayout from './components/layouts/MainLayout'
+import { useAuthStore } from './store/authStore'
 
 function App() {
+  const { initializeAuth, isLoading } = useAuthStore()
+
+  useEffect(() => {
+    // Firebase 인증 상태 초기화
+    const unsubscribe = initializeAuth()
+    
+    // 컴포넌트 언마운트 시 리스너 정리
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
+  }, [initializeAuth])
+
+  // 인증 상태 로딩 중일 때 표시
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <Spin size="large" />
+        <div>로딩 중...</div>
+      </div>
+    )
+  }
+
   return (
     <BrowserRouter>
       <Routes>

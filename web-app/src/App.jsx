@@ -1,4 +1,4 @@
-import { Container, Typography } from '@mui/material';
+import { Container, Typography, CircularProgress, Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { Layout } from './components/layout/Layout';
@@ -10,6 +10,8 @@ import { Status } from './pages/Status';
 import { Supply } from './pages/Supply';
 import { Setting } from './pages/Setting';
 import theme from './theme';
+import { useAuthStore } from './store/authStore';
+import { useEffect } from 'react';
 
 // Layout이 필요없는 페이지들
 const noLayoutPages = ['/login', '/signup', '/home'];
@@ -95,6 +97,42 @@ function AppContent() {
 }
 
 function App() {
+  const { initializeAuth, isLoading } = useAuthStore();
+
+  useEffect(() => {
+    // Firebase 인증 상태 초기화
+    const unsubscribe = initializeAuth();
+    
+    // 컴포넌트 언마운트 시 리스너 정리
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [initializeAuth]);
+
+  // 인증 상태 로딩 중일 때 표시
+  if (isLoading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+            flexDirection: 'column',
+            gap: 2
+          }}
+        >
+          <CircularProgress />
+          <Typography>로딩 중...</Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

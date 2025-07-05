@@ -3,27 +3,35 @@ import { useNavigate } from 'react-router-dom'
 import { COLORS } from '../styles/colors'
 
 import { Logo } from '../components/login/Logo'
+import { signUp } from '../services/authService'
+import { useState } from 'react'
 
 const { Content } = Layout
 
 const SignUp = () => {
     const navigate = useNavigate()
+    const [isLoading, setIsLoading] = useState(false)
 
     const onSignUp = async (values) => {
-        // const { user_id, password } = values
-        // const user_type = 'public_officer'
+        const { email, password, displayName } = values
+        
+        setIsLoading(true)
+        
         try {
-            // ✅ 여기에 실제 회원가입 API 요청 예정 - api 폴더에 구현해서 들고오기?
-            // const response = await loginService.login({ username, password })
-            // if (response.success) {
-            //   navigate(`/home`)
-            // }
-
-            console.log('회원가입 요청: ', values)
-            message.success('회원가입 성공 (예시)')
-            navigate('/login')
+            const result = await signUp(email, password, displayName)
+            
+            if (result.success) {
+                console.log('회원가입 성공:', result.user)
+                message.success('회원가입이 완료되었습니다!')
+                navigate('/login')
+            } else {
+                message.error(result.error.message)
+            }
         } catch (error) {
-            message.error('회원가입 실패: ', error);
+            console.error('회원가입 실패:', error)
+            message.error('회원가입 중 오류가 발생했습니다.')
+        } finally {
+            setIsLoading(false)
         }
     }
     return (
@@ -45,17 +53,48 @@ const SignUp = () => {
                     style={{ width: '380px' }}
                 >
                     <Form.Item
-                        name="user_id"
-                        rules={[{ required: true, message: '아이디를 입력하세요.' }]}
+                        name="displayName"
+                        rules={[{ required: true, message: '이름을 입력하세요.' }]}
                     >
-                    <Input placeholder="아이디" />
+                        <Input placeholder="이름" disabled={isLoading} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="email"
+                        rules={[
+                            { required: true, message: '이메일을 입력하세요.' },
+                            { type: 'email', message: '올바른 이메일 형식을 입력하세요.' }
+                        ]}
+                    >
+                        <Input placeholder="이메일" disabled={isLoading} />
                     </Form.Item>
 
                     <Form.Item
                         name="password"
-                        rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}
+                        rules={[
+                            { required: true, message: '비밀번호를 입력하세요.' },
+                            { min: 6, message: '비밀번호는 6자 이상이어야 합니다.' }
+                        ]}
                     >
-                    <Input.Password placeholder="비밀번호" />
+                        <Input.Password placeholder="비밀번호 (6자 이상)" disabled={isLoading} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="confirmPassword"
+                        dependencies={['password']}
+                        rules={[
+                            { required: true, message: '비밀번호를 다시 입력하세요.' },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || getFieldValue('password') === value) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('비밀번호가 일치하지 않습니다.'));
+                                },
+                            }),
+                        ]}
+                    >
+                        <Input.Password placeholder="비밀번호 확인" disabled={isLoading} />
                     </Form.Item>
 
                     <Form.Item
@@ -69,18 +108,27 @@ const SignUp = () => {
                             beforeUpload={() => false} // 업로드를 수동으로 처리할 경우 false 설정
                             multiple={false}
                             maxCount={1}
+                            disabled={isLoading}
                         >
-                            <Button style={{ width: '380px' }}>전자서명인증서 선택</Button>
+                            <Button style={{ width: '380px' }} disabled={isLoading}>
+                                전자서명인증서 선택
+                            </Button>
                         </Upload>
                     </Form.Item>
 
                     <Form.Item style={{ marginTop: '2rem', marginBottom: 0 }}>
-                        <Space style={{ display: 'flex', justifyContent: 'center' }}>
-                            
+                        <Space style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Button
+                                onClick={() => navigate('/login')}
+                                disabled={isLoading}
+                            >
+                                로그인으로 이동
+                            </Button>
                             <Button
                                 type="primary"
                                 htmlType="submit"
                                 style={{ backgroundColor: COLORS.primary }}
+                                loading={isLoading}
                             >
                                 사용자 등록
                             </Button>

@@ -3,6 +3,7 @@ import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { DashboardOutlined, WarningOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons'
 import { useShelterStore } from '../../store/useShelterStore'
+import { useAuthStore } from '../../store/authStore'
 import { COLORS } from '../../styles/colors'
 
 const { Title, Text } = Typography
@@ -15,6 +16,7 @@ export default function MainLayout() {
     const selectedId = useShelterStore((s)=>s.selectedId)
     const name = useShelterStore((s)=>s.name)
     const setName = useShelterStore((s)=>s.setName)
+    const { logout } = useAuthStore()
 
     const selectedKey = location.pathname.split('/')[1] || 'home'
 
@@ -27,8 +29,22 @@ export default function MainLayout() {
         navigate(`/${key}/${selectedId}`)
     }
 
-    const handleLogout = () => {
-        navigate('/login')
+    const handleLogout = async () => {
+        try {
+            const result = await logout()
+            if (result.success) {
+                console.log('🔥 Firebase 로그아웃 성공')
+                navigate('/login')
+            } else {
+                console.error('❌ 로그아웃 실패:', result.error)
+                // 실패해도 강제로 로그아웃 처리
+                navigate('/login')
+            }
+        } catch (error) {
+            console.error('❌ 로그아웃 처리 중 오류:', error)
+            // 오류가 발생해도 강제로 로그아웃 처리
+            navigate('/login')
+        }
     }
 
     return (

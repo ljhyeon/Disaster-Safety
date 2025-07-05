@@ -3,27 +3,61 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, TextField, Typography } from '@mui/material';
 
 import { Logo } from '../components/Logo';
+import { signUp } from '../services/authService';
 
 export function SignUp() {
     const navigate = useNavigate();
-    const [id, setId] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [displayName, setDisplayName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSignUp = async () => {
         // 입력값 검증
-        if (!id || !password) {
-            setErrorMessage('아이디와 비밀번호를 모두 입력해주세요.');
+        if (!email || !password || !confirmPassword || !displayName) {
+            setErrorMessage('모든 필드를 입력해주세요.');
             return;
         }
 
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setErrorMessage('올바른 이메일 형식을 입력해주세요.');
+            return;
+        }
+
+        // 비밀번호 확인
+        if (password !== confirmPassword) {
+            setErrorMessage('비밀번호가 일치하지 않습니다.');
+            return;
+        }
+
+        // 비밀번호 길이 검증
+        if (password.length < 6) {
+            setErrorMessage('비밀번호는 6자 이상이어야 합니다.');
+            return;
+        }
+
+        setIsLoading(true);
+        setErrorMessage('');
+
         try {
-            console.log('회원 등록 성공:', { id, password });
-            // 실제 회원 등록 API 호출 코드 추가
-            navigate('/login');
+            const result = await signUp(email, password, displayName);
+            
+            if (result.success) {
+                console.log('회원 등록 성공:', result.user);
+                alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+                navigate('/login');
+            } else {
+                setErrorMessage(result.error.message);
+            }
         } catch (error) {
             console.error('회원 등록 실패:', error);
-            setErrorMessage('회원 등록 실패. 다시 시도하세요.');
+            setErrorMessage('회원 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,12 +80,24 @@ export function SignUp() {
             <Box width="85%" my={2}>
                 <TextField
                     fullWidth
-                    label="아이디"
+                    label="이름"
                     variant="outlined"
                     margin="normal"
-                    value={id}
-                    onChange={(e) => setId(e.target.value)}
-                    error={Boolean(errorMessage && !id)}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    error={Boolean(errorMessage && !displayName)}
+                    disabled={isLoading}
+                />
+                <TextField
+                    fullWidth
+                    label="이메일"
+                    type="email"
+                    variant="outlined"
+                    margin="normal"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    error={Boolean(errorMessage && !email)}
+                    disabled={isLoading}
                 />
                 <TextField
                     fullWidth
@@ -62,6 +108,24 @@ export function SignUp() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     error={Boolean(errorMessage && !password)}
+                    disabled={isLoading}
+                    helperText="6자 이상 입력해주세요"
+                />
+                <TextField
+                    fullWidth
+                    label="비밀번호 확인"
+                    type="password"
+                    variant="outlined"
+                    margin="normal"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    error={Boolean(errorMessage && !confirmPassword)}
+                    disabled={isLoading}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSignUp();
+                        }
+                    }}
                 />
 
                 {errorMessage && (
@@ -73,11 +137,21 @@ export function SignUp() {
                 <Box display="flex" justifyContent="space-between" mt={2}>
                     <Button
                         fullWidth
+                        variant="outlined"
+                        onClick={() => navigate('/login')}
+                        sx={{ mr: 1 }}
+                        disabled={isLoading}
+                    >
+                        로그인으로 이동
+                    </Button>
+                    <Button
+                        fullWidth
                         variant="contained"
                         onClick={handleSignUp}
                         sx={{ ml: 1 }}
+                        disabled={isLoading}
                     >
-                        사용자 등록
+                        {isLoading ? '등록 중...' : '사용자 등록'}
                     </Button>
                 </Box>
             </Box>
