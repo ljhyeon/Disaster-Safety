@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Box, Button, TextField, Typography, FormControlLabel, Checkbox } from '@mui/material';
 
 import { Logo } from '../components/Logo';
 import { signUp } from '../services/authService';
+import { USER_TYPES } from '../services/userService';
 
 export function SignUp() {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ export function SignUp() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [displayName, setDisplayName] = useState('');
+    const [termsAgreed, setTermsAgreed] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -18,6 +20,12 @@ export function SignUp() {
         // 입력값 검증
         if (!email || !password || !confirmPassword || !displayName) {
             setErrorMessage('모든 필드를 입력해주세요.');
+            return;
+        }
+
+        // 이용약관 동의 확인
+        if (!termsAgreed) {
+            setErrorMessage('이용약관에 동의해주세요.');
             return;
         }
 
@@ -44,10 +52,18 @@ export function SignUp() {
         setErrorMessage('');
 
         try {
-            const result = await signUp(email, password, displayName);
+            // 일반 사용자로 회원가입
+            const result = await signUp(
+                email, 
+                password, 
+                displayName, 
+                USER_TYPES.GENERAL_USER, 
+                termsAgreed
+            );
             
             if (result.success) {
                 console.log('회원 등록 성공:', result.user);
+                console.log('Firestore 저장 결과:', result.firestoreResult);
                 alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
                 navigate('/login');
             } else {
@@ -126,6 +142,23 @@ export function SignUp() {
                             handleSignUp();
                         }
                     }}
+                />
+
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={termsAgreed}
+                            onChange={(e) => setTermsAgreed(e.target.checked)}
+                            disabled={isLoading}
+                            color="primary"
+                        />
+                    }
+                    label={
+                        <Typography variant="body2">
+                            이용약관 및 개인정보처리방침에 동의합니다. (필수)
+                        </Typography>
+                    }
+                    sx={{ mt: 2, mb: 1 }}
                 />
 
                 {errorMessage && (

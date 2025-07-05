@@ -11,9 +11,10 @@ import {
   updatePassword
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
+import { createUser, getUser } from './userService';
 
-// 회원가입
-export const signUp = async (email, password, displayName = '') => {
+// 회원가입 (사용자 정보와 함께)
+export const signUp = async (email, password, displayName = '', userType, termsAgreed = false, certFile = null) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -23,14 +24,33 @@ export const signUp = async (email, password, displayName = '') => {
       await updateProfile(user, { displayName });
     }
     
+    // Firestore에 사용자 정보 저장
+    const userCreateResult = await createUser({
+      uid: user.uid,
+      email: user.email,
+      displayName: displayName,
+      userType: userType,
+      termsAgreed: termsAgreed,
+      certFile: certFile
+    });
+    
+    if (!userCreateResult.success) {
+      console.error('Firestore 사용자 정보 저장 실패:', userCreateResult.error);
+      // Firebase Auth 사용자는 생성되었지만 Firestore 저장 실패
+      // 필요시 여기서 rollback 로직 추가 가능
+    }
+    
     return {
       success: true,
       user: {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || displayName,
-        emailVerified: user.emailVerified
-      }
+        emailVerified: user.emailVerified,
+        userType: userType,
+        termsAgreed: termsAgreed
+      },
+      firestoreResult: userCreateResult
     };
   } catch (error) {
     return {
@@ -43,11 +63,21 @@ export const signUp = async (email, password, displayName = '') => {
   }
 };
 
-// 로그인
+// 로그인 (Firestore 사용자 정보 포함)
 export const signIn = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    
+    // Firestore에서 사용자 정보 조회
+    const userDataResult = await getUser(user.uid);
+    let userData = null;
+    
+    if (userDataResult.success) {
+      userData = userDataResult.user;
+    } else {
+      console.warn('Firestore 사용자 정보 조회 실패:', userDataResult.error);
+    }
     
     return {
       success: true,
@@ -55,7 +85,12 @@ export const signIn = async (email, password) => {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
-        emailVerified: user.emailVerified
+        emailVerified: user.emailVerified,
+        // Firestore 데이터 추가
+        userType: userData?.user_type || null,
+        termsAgreed: userData?.terms_agreed || false,
+        createdAt: userData?.created_at || null,
+        updatedAt: userData?.updated_at || null
       }
     };
   } catch (error) {

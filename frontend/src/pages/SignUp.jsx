@@ -1,9 +1,10 @@
-import { Layout, Input, Button, Form, Space, message, Upload } from 'antd'
+import { Layout, Input, Button, Form, Space, message, Upload, Checkbox } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { COLORS } from '../styles/colors'
 
 import { Logo } from '../components/login/Logo'
 import { signUp } from '../services/authService'
+import { USER_TYPES } from '../services/userService'
 import { useState } from 'react'
 
 const { Content } = Layout
@@ -13,15 +14,36 @@ const SignUp = () => {
     const [isLoading, setIsLoading] = useState(false)
 
     const onSignUp = async (values) => {
-        const { email, password, displayName } = values
+        const { email, password, displayName, termsAgreed, file } = values
+        
+        // 이용약관 동의 확인
+        if (!termsAgreed) {
+            message.error('이용약관에 동의해주세요.')
+            return
+        }
+        
+        // 공무원 인증서 파일 확인 (현재는 업로드된 파일명만 저장)
+        let certFile = null
+        if (file && file.length > 0) {
+            certFile = file[0].name // 추후 Storage URL로 변경 예정
+        }
         
         setIsLoading(true)
         
         try {
-            const result = await signUp(email, password, displayName)
+            // 공무원으로 회원가입
+            const result = await signUp(
+                email, 
+                password, 
+                displayName, 
+                USER_TYPES.PUBLIC_OFFICER, 
+                termsAgreed,
+                certFile
+            )
             
             if (result.success) {
                 console.log('회원가입 성공:', result.user)
+                console.log('Firestore 저장 결과:', result.firestoreResult)
                 message.success('회원가입이 완료되었습니다!')
                 navigate('/login')
             } else {
@@ -111,9 +133,24 @@ const SignUp = () => {
                             disabled={isLoading}
                         >
                             <Button style={{ width: '380px' }} disabled={isLoading}>
-                                전자서명인증서 선택
+                                전자서명인증서 선택 (공무원 인증용)
                             </Button>
                         </Upload>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="termsAgreed"
+                        valuePropName="checked"
+                        rules={[
+                            {
+                                validator: (_, value) =>
+                                    value ? Promise.resolve() : Promise.reject(new Error('이용약관에 동의해주세요.')),
+                            },
+                        ]}
+                    >
+                        <Checkbox disabled={isLoading}>
+                            이용약관 및 개인정보처리방침에 동의합니다. (필수)
+                        </Checkbox>
                     </Form.Item>
 
                     <Form.Item style={{ marginTop: '2rem', marginBottom: 0 }}>
