@@ -109,8 +109,8 @@ export function Layout({ description, children }) {
             } else {
                 console.error('❌ 로그아웃 실패:', result.error);
                 // 실패해도 강제로 로그아웃 처리
-                navigate('/login');
-                setIsLogoutDialogOpen(false);
+            navigate('/login');
+            setIsLogoutDialogOpen(false);
             }
         } catch (error) {
             console.error('❌ 로그아웃 처리 중 오류:', error);

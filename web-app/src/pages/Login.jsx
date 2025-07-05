@@ -38,7 +38,7 @@ export function Login() {
             if (result.success) {
                 setUser(result.user);
                 console.log('로그인 성공:', result.user);
-                navigate('/home');
+            navigate('/home');
             } else {
                 setErrorMessage(result.error.message);
             }

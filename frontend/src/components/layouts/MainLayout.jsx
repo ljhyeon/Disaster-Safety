@@ -43,7 +43,7 @@ export default function MainLayout() {
         } catch (error) {
             console.error('❌ 로그아웃 처리 중 오류:', error)
             // 오류가 발생해도 강제로 로그아웃 처리
-            navigate('/login')
+        navigate('/login')
         }
     }
 

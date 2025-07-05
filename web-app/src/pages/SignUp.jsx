@@ -65,7 +65,7 @@ export function SignUp() {
                 console.log('회원 등록 성공:', result.user);
                 console.log('Firestore 저장 결과:', result.firestoreResult);
                 alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
-                navigate('/login');
+            navigate('/login');
             } else {
                 setErrorMessage(result.error.message);
             }

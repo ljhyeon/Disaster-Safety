@@ -26,7 +26,7 @@ const Login = () => {
                 setUser(result.user)
                 console.log('로그인 성공:', result.user)
                 message.success('로그인 성공!')
-                navigate('/home')
+            navigate('/home')
             } else {
                 message.error(result.error.message)
             }

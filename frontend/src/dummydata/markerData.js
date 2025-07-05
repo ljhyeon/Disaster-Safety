@@ -9,4 +9,9 @@ export const markers = [
         position: [35.9083, 128.6133],
         description: '전시 및 물류 거점',
     },
+    {
+        name: '북부도서관',
+        position: [35.885, 128.5838888888889],
+        description: '북부 도서관',
+    }
 ]

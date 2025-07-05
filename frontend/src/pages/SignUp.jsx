@@ -45,7 +45,7 @@ const SignUp = () => {
                 console.log('회원가입 성공:', result.user)
                 console.log('Firestore 저장 결과:', result.firestoreResult)
                 message.success('회원가입이 완료되었습니다!')
-                navigate('/login')
+            navigate('/login')
             } else {
                 message.error(result.error.message)
             }

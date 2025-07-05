@@ -9,6 +9,7 @@ import ProductList from './pages/ProductList'
 import AddProduct from './pages/AddProduct'
 import Setting from './pages/Setting'
 import EditSetting from './pages/EditSetting'
+import ShelterRegister from './pages/ShelterRegister'
 import MainLayout from './components/layouts/MainLayout'
 import { useAuthStore } from './store/authStore'
 
@@ -54,6 +55,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="home" element={<Home />} />
+        <Route path="/shelter-register" element={<ShelterRegister />} />
         
         {/* ✅ MainLayout 적용 대상 */}
         <Route path="/" element={<MainLayout />}>
