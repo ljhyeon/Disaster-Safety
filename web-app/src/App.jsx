@@ -16,7 +16,7 @@ const noLayoutPages = ['/login', '/signup', '/home'];
 
 // 페이지별 description 정의
 const pageDescriptions = {
-  '/supply': (
+  '/supply/:id': (
     <Typography 
       variant="caption" 
       sx={{ 
@@ -29,7 +29,7 @@ const pageDescriptions = {
       각 대피소에서 필요로 하는 구호품이에요
     </Typography>
   ),
-  '/status': (
+  '/status/:id': (
     <Typography 
       variant="caption" 
       sx={{ 
@@ -42,7 +42,7 @@ const pageDescriptions = {
       내가 보내기로 한 구호품이에요
     </Typography>
   ),
-  '/setting': (
+  '/setting/:id': (
     <Typography 
       variant="caption" 
       sx={{ 
@@ -75,10 +75,10 @@ function AppContent() {
 
   // Layout에서 사용할 때
   const getDescriptionKey = (pathname) => {
-    if (pathname.startsWith('/supply')) return '/supply';
-    if (pathname.startsWith('/status')) return '/status';
-    if (pathname.startsWith('/setting')) return '/setting';
-    return '/supply';
+    if (pathname.startsWith('/supply')) return '/supply/:id';
+    if (pathname.startsWith('/status')) return '/status/:id';
+    if (pathname.startsWith('/setting')) return '/setting/:id';
+    return '/supply/:id'; // 기본값도 수정
   };
 
   if (shouldShowLayout) {
