@@ -44,13 +44,13 @@ export function Setting() {
         }
     };
 
-    const handleSubmit = async ({ item, quantity, unit }) => {
+    const handleSubmit = async ({ item }) => {
         if (!user) return;
         
         setSubmitting(true);
         
         try {
-            const result = await addUserDonationItem(user.uid, { item, quantity, unit });
+            const result = await addUserDonationItem(user.uid, { item });
             if (result.success) {
                 setOpen(false);
                 loadDonations(); // 목록 새로고침
@@ -138,7 +138,7 @@ export function Setting() {
                             borderRadius: 1
                         }}>
                             <Typography variant="body1">
-                                {donation.item_name} {donation.quantity} {donation.unit}
+                                {donation.item_name}
                             </Typography>
                             <IconButton 
                                 size="small" 
@@ -168,10 +168,9 @@ export function Setting() {
                 onClose={() => setOpen(false)}
                 onSubmit={handleSubmit}
                 label1="물품명"
-                label2="수량"
-                label3="단위"
                 commnet="기부하고 싶은 물품을 입력해주세요"
                 loading={submitting}
+                itemOnly={true}
             />
 
             <AddressDialog

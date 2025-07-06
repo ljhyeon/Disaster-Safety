@@ -8,16 +8,17 @@ import {
     Stack, 
     Typography,
     Chip,
-    Divider
+    Divider,
+    TextField
 } from '@mui/material';
 import { 
     LocationOn, 
     Schedule, 
     Flag,
     Category,
-    Numbers,
-    Person
 } from '@mui/icons-material';
+
+import { useState } from 'react';
 
 export function RequestDetailDialog({ 
     open, 
@@ -26,6 +27,9 @@ export function RequestDetailDialog({
     request,
     loading = false 
 }) {
+    const [supplyQuantity, setSupplyQuantity] = useState('');
+    const [error, setError] = useState('');
+
     if (!request) return null;
 
     // 날짜 포맷팅
@@ -57,8 +61,27 @@ export function RequestDetailDialog({
         }
     };
 
+    const handleQuantityChange = (value) => {
+        setSupplyQuantity(value);
+        if (error) setError('');
+    };
+
+    const handleAccept = () => {
+        if (!supplyQuantity || parseInt(supplyQuantity) <= 0) {
+            setError('공급할 수량을 입력해주세요.');
+            return;
+        }
+        onAccept({ quantity: parseInt(supplyQuantity) });
+    };
+
+    const handleClose = () => {
+        setSupplyQuantity('');
+        setError('');
+        onClose();
+    };
+
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle>
                 <Typography variant="h6" component="div">
                     구호품 요청 상세정보
@@ -68,11 +91,11 @@ export function RequestDetailDialog({
             <DialogContent>
                 <Stack spacing={3} sx={{ py: 1 }}>
                     {/* 기본 정보 */}
-                    <Box>
-                        <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                             {request.item_name}
                         </Typography>
-                        <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                        <Typography variant="h6" color="primary">
                             {request.quantity} {request.unit}
                         </Typography>
                     </Box>
@@ -181,13 +204,32 @@ export function RequestDetailDialog({
                             </Box>
                         </>
                     )}
+
+                    {/* 배송 수량 입력 */}
+                    <Divider />
+                    <Box>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+                            배송할 수량
+                        </Typography>
+                        <TextField
+                            label="배송 수량"
+                            value={supplyQuantity}
+                            onChange={(e) => handleQuantityChange(e.target.value)}
+                            fullWidth
+                            type="number"
+                            inputProps={{ min: 1 }}
+                            error={!!error}
+                            helperText={error || `단위: ${request.unit}`}
+                            placeholder={`최대 ${request.quantity} ${request.unit}`}
+                        />
+                    </Box>
                 </Stack>
             </DialogContent>
             
             <DialogActions sx={{ p: 2 }}>
                 <Box display="flex" justifyContent="space-between" sx={{ width: "100%", gap: 1 }}>
                     <Button
-                        onClick={onClose}
+                        onClick={handleClose}
                         variant="outlined"
                         disabled={loading}
                         sx={{ flex: 1 }}
@@ -195,7 +237,7 @@ export function RequestDetailDialog({
                         닫기
                     </Button>
                     <Button
-                        onClick={onAccept}
+                        onClick={handleAccept}
                         variant="contained"
                         disabled={loading}
                         sx={{ flex: 1 }}

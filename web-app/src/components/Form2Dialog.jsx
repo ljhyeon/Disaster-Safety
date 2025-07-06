@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, CircularProgress } from '@mui/material';
 
-export function Form2Dialog({ open, onClose, onSubmit, label1 = '', label2 = '', label3 = '', commnet, loading = false }) {
+export function Form2Dialog({ open, onClose, onSubmit, label1 = '', label2 = '', label3 = '', commnet, loading = false, itemOnly = false }) {
     const [item, setItem] = useState('');
     const [quantity, setQuantity] = useState('');
     const [unit, setUnit] = useState('');
@@ -10,14 +10,22 @@ export function Form2Dialog({ open, onClose, onSubmit, label1 = '', label2 = '',
     const handleSubmit = () => {
         const newError = {
             item: !item,
-            quantity: !quantity,
-            unit: !unit,
+            quantity: itemOnly ? false : !quantity,
+            unit: itemOnly ? false : !unit,
         };
         setError(newError);
 
-        // 모든 값이 있으면 제출
-        if (!newError.item && !newError.quantity && !newError.unit) {
-            onSubmit({ item, quantity, unit });
+        // itemOnly 모드일 때는 item만 검사, 아니면 모든 값 검사
+        const isValid = itemOnly 
+            ? !newError.item 
+            : (!newError.item && !newError.quantity && !newError.unit);
+
+        if (isValid) {
+            const submitData = itemOnly 
+                ? { item } 
+                : { item, quantity, unit };
+            
+            onSubmit(submitData);
             setItem('');
             setQuantity('');
             setUnit('');
@@ -53,25 +61,29 @@ export function Form2Dialog({ open, onClose, onSubmit, label1 = '', label2 = '',
                         helperText={error.item ? '값을 입력해주세요.' : ''}
                         disabled={loading}
                     />
-                    <TextField
-                        label={label2}
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                        fullWidth
-                        error={error.quantity}
-                        helperText={error.quantity ? '값을 입력해주세요.' : ''}
-                        disabled={loading}
-                    />
-                    <TextField
-                        label={label3}
-                        value={unit}
-                        onChange={(e) => setUnit(e.target.value)}
-                        fullWidth
-                        error={error.unit}
-                        helperText={error.unit ? '값을 입력해주세요.' : ''}
-                        disabled={loading}
-                        placeholder="예: 개, 박스, kg 등"
-                    />
+                    {!itemOnly && (
+                        <>
+                            <TextField
+                                label={label2}
+                                value={quantity}
+                                onChange={(e) => setQuantity(e.target.value)}
+                                fullWidth
+                                error={error.quantity}
+                                helperText={error.quantity ? '값을 입력해주세요.' : ''}
+                                disabled={loading}
+                            />
+                            <TextField
+                                label={label3}
+                                value={unit}
+                                onChange={(e) => setUnit(e.target.value)}
+                                fullWidth
+                                error={error.unit}
+                                helperText={error.unit ? '값을 입력해주세요.' : ''}
+                                disabled={loading}
+                                placeholder="예: 개, 박스, kg 등"
+                            />
+                        </>
+                    )}
                 </Box>
             </DialogContent>
             <DialogActions>

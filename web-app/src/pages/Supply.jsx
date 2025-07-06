@@ -1,62 +1,61 @@
 import { useState, useEffect } from "react";
-import { useParams } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, Button, Chip, CircularProgress, Alert } from '@mui/material';
-import { LocationOn, Schedule, Flag } from '@mui/icons-material';
-
-import { InfoDialog } from "../components/InfoDialog";
-import { CheckDialog } from "../components/CheckDialog";
-import { getMatchingReliefRequests, addReliefSupplySimple, RELIEF_PRIORITY } from "../services/reliefService";
-import { getShelter } from "../services/shelterService";
+import { Box, Typography, Button, Chip, CircularProgress, Alert } from '@mui/material';
+import { getAllReliefRequests, addReliefSupplySimple, getUserDonationItems } from "../services/reliefService";
 import { useAuthStore } from "../store/authStore";
-import { useShelterStore } from "../store/shelterStore";
 import { RequestDetailDialog } from '../components/RequestDetailDialog';
 import { AcceptedDialog } from '../components/AcceptedDialog';
 
 export function Supply() {
-    const { shelterId } = useParams();
-    const [matchingRequests, setMatchingRequests] = useState([]);
+    const [allRequests, setAllRequests] = useState([]);
     const [userDonations, setUserDonations] = useState([]);
-    const [shelter, setShelter] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [open, setOpen] = useState(false);
-    const [checkOpen, setCheckOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [supplying, setSupplying] = useState(false);
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [acceptedDialogOpen, setAcceptedDialogOpen] = useState(false);
     
     const { user } = useAuthStore();
-    const { shelterInfo } = useShelterStore();
 
-    // 매칭 구호품 요청 목록 로드
+    // 모든 구호품 요청 목록 로드
     useEffect(() => {
         if (user) {
-            loadMatchingRequests();
+            loadAllRequests();
         }
     }, [user]);
 
-    const loadMatchingRequests = async () => {
+    const loadAllRequests = async () => {
         if (!user) return;
         
         setLoading(true);
         setError(null);
         
         try {
-            console.log('📦 Supply 매칭 요청 조회 시작');
-            const result = await getMatchingReliefRequests(user.uid);
+            console.log('📦 Supply 모든 요청 조회 시작');
             
-            if (result.success) {
-                setMatchingRequests(result.requests || []);
-                setUserDonations(result.userDonations || []);
-                console.log('✅ 매칭된 구호품 요청 수:', result.requests?.length || 0);
-                console.log('✅ 사용자 희망 기부 물품 수:', result.userDonations?.length || 0);
+            // 모든 구호품 요청 조회
+            const allRequestsResult = await getAllReliefRequests();
+            
+            // 사용자 희망 기부 물품 조회
+            const userDonationsResult = await getUserDonationItems(user.uid);
+            
+            if (allRequestsResult.success) {
+                setAllRequests(allRequestsResult.requests || []);
+                console.log('✅ 모든 구호품 요청 수:', allRequestsResult.requests?.length || 0);
             } else {
-                console.error('❌ 매칭 요청 조회 실패:', result.error);
-                setError(result.error?.message || '매칭되는 구호품 요청을 불러올 수 없습니다.');
+                console.error('❌ 구호품 요청 조회 실패:', allRequestsResult.error);
+                setError('구호품 요청을 불러올 수 없습니다.');
+            }
+            
+            if (userDonationsResult.success) {
+                setUserDonations(userDonationsResult.donations || []);
+                console.log('✅ 사용자 희망 기부 물품 수:', userDonationsResult.donations?.length || 0);
+            } else {
+                console.warn('⚠️ 사용자 희망 기부 물품 조회 실패:', userDonationsResult.error);
+                setUserDonations([]);
             }
         } catch (error) {
-            console.error('❌ 매칭 요청 조회 중 오류:', error);
+            console.error('❌ 요청 조회 중 오류:', error);
             setError('데이터를 불러오는 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
@@ -95,7 +94,7 @@ export function Supply() {
                 setOpen(false);
                 alert('접수되었습니다. [기부 배송] 페이지에서 송장번호를 입력해주세요.');
                 // 목록 새로고침
-                loadMatchingRequests();
+                loadAllRequests();
             } else {
                 alert(`구호품 공급 등록 실패: ${result.error.message}`);
             }
@@ -136,14 +135,15 @@ export function Supply() {
         });
     };
 
-    const handleAccept = async () => {
-        if (!selectedRequest || !user) return;
+    const handleAccept = async (acceptData) => {
+        if (!selectedRequest || !user || !acceptData?.quantity) return;
         
         setSupplying(true);
         try {
             const result = await addReliefSupplySimple(selectedRequest.request_id, user.uid, {
                 item_name: selectedRequest.item_name,
-                quantity: selectedRequest.quantity,
+                quantity: acceptData.quantity, // 사용자가 입력한 공급 수량
+                requested_quantity: selectedRequest.quantity, // 원래 요청 수량
                 unit: selectedRequest.unit,
                 category: selectedRequest.category,
                 subcategory: selectedRequest.subcategory,
@@ -156,7 +156,7 @@ export function Supply() {
                 setDetailDialogOpen(false);
                 setAcceptedDialogOpen(true);
                 // 목록 새로고침
-                loadMatchingRequests();
+                loadAllRequests();
             } else {
                 alert(`접수 실패: ${result.error.message}`);
             }
@@ -180,6 +180,16 @@ export function Supply() {
         setSelectedRequest(null);
     };
 
+    // 사용자 희망 기부 물품과 매칭되는지 확인
+    const isMatchingRequest = (request) => {
+        if (!userDonations || userDonations.length === 0) return false;
+        
+        return userDonations.some(donation => 
+            donation.item_name.toLowerCase().includes(request.item_name.toLowerCase()) ||
+            request.item_name.toLowerCase().includes(donation.item_name.toLowerCase())
+        );
+    };
+
     if (loading) {
         return (
             <Box sx={{ 
@@ -191,18 +201,18 @@ export function Supply() {
                 gap: 2
             }}>
                 <CircularProgress />
-                <Typography>매칭되는 구호품 요청을 찾는 중...</Typography>
+                <Typography>구호품 요청을 불러오는 중...</Typography>
             </Box>
         );
     }
 
     if (error) {
         return (
-            <Box sx={{ p: 2 }}>
+            <Box>
                 <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
                 </Alert>
-                <Button variant="outlined" onClick={loadMatchingRequests}>
+                <Button variant="outlined" onClick={loadAllRequests}>
                     다시 시도
                 </Button>
             </Box>
@@ -211,7 +221,7 @@ export function Supply() {
 
     if (userDonations.length === 0) {
         return (
-            <Box sx={{ p: 2 }}>
+            <Box>
                 <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
                     구호품 공급하기
                 </Typography>
@@ -234,14 +244,13 @@ export function Supply() {
         );
     }
 
-    if (matchingRequests.length === 0) {
+    if (allRequests.length === 0) {
         return (
-            <Box sx={{ p: 2 }}>
+            <Box>
                 <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
                     구호품 공급하기
                 </Typography>
                 
-                {/* 사용자 희망 기부 물품 표시 */}
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="h6" sx={{ mb: 1 }}>
                         내 희망 기부 물품
@@ -250,7 +259,7 @@ export function Supply() {
                         {userDonations.map((donation) => (
                             <Chip 
                                 key={donation.id}
-                                label={`${donation.item_name} ${donation.quantity}`}
+                                label={donation.item_name}
                                 color="primary"
                                 variant="outlined"
                                 size="small"
@@ -268,12 +277,12 @@ export function Supply() {
                     gap: 2
                 }}>
                     <Typography variant="h6" color="text.secondary">
-                        현재 매칭되는 구호품 요청이 없습니다
+                        현재 구호품 요청이 없습니다
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        등록하신 희망 기부 물품과 일치하는 구호품 요청이 없습니다
+                        등록된 구호품 요청이 없습니다
                     </Typography>
-                    <Button variant="outlined" onClick={loadMatchingRequests}>
+                    <Button variant="outlined" onClick={loadAllRequests}>
                         새로고침
                     </Button>
                 </Box>
@@ -282,132 +291,52 @@ export function Supply() {
     }
 
     return (
-        <Box sx={{ p: 2 }}>
-            {/* 헤더 */}
-            <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box>
-                        <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-                            구호품 공급하기
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            내 희망 기부 물품과 매칭되는 구호품 요청
-                        </Typography>
-                    </Box>
-                    <Button variant="outlined" size="small" onClick={loadMatchingRequests}>
-                        새로고침
-                    </Button>
-                </Box>
-                
-                {/* 사용자 희망 기부 물품 표시 */}
-                <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                        내 희망 기부 물품
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {userDonations.map((donation) => (
-                            <Chip 
-                                key={donation.id}
-                                label={`${donation.item_name} ${donation.quantity}`}
-                                color="primary"
-                                variant="outlined"
-                                size="small"
-                            />
-                        ))}
-                    </Box>
-                </Box>
-
-                <Box sx={{ 
-                    p: 2,
-                    bgcolor: 'success.light',
-                    borderRadius: 1,
-                    color: 'success.contrastText'
-                }}>
-                    <Typography variant="body2">
-                        💡 총 {matchingRequests.length}개의 매칭되는 구호품 요청이 있습니다
-                    </Typography>
-                </Box>
-            </Box>
-
-            {/* 구호품 요청 목록 */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {matchingRequests.map((request) => (
-                    <Card 
-                        key={request.id} 
-                        sx={{ 
-                            cursor: 'pointer',
-                            '&:hover': {
-                                boxShadow: 3,
-                                transform: 'translateY(-2px)'
-                            },
-                            transition: 'all 0.2s ease-in-out'
-                        }}
-                        onClick={() => handleRequestClick(request)}
-                    >
-                        <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                <Box sx={{ flex: 1 }}>
-                                    <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-                                        {request.item_name}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                        <LocationOn fontSize="small" color="action" />
-                                        <Typography variant="body2" color="text.secondary">
-                                            {request.shelter?.shelter_name || '대피소 정보 없음'}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Schedule fontSize="small" color="action" />
-                                        <Typography variant="body2" color="text.secondary">
-                                            {formatDate(request.created_at)}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                                    <Chip 
-                                        label={request.priority}
-                                        color={getPriorityColor(request.priority)}
-                                        size="small"
-                                        icon={<Flag fontSize="small" />}
-                                    />
-                                    <Typography variant="body2" color="text.secondary">
-                                        {request.quantity} {request.unit}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <Chip 
-                                        label={request.category}
-                                        variant="outlined"
-                                        size="small"
-                                    />
-                                    <Chip 
-                                        label={request.subcategory}
-                                        variant="outlined"
-                                        size="small"
-                                    />
-                                </Box>
-                                <Button 
-                                    variant="contained" 
-                                    size="small"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRequestClick(request);
-                                    }}
-                                >
-                                    상세보기
-                                </Button>
-                            </Box>
+        <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {allRequests.map((request, index) => (
+                    <Box key={request.id}>
+                        <Box 
+                            sx={{ 
+                                cursor: 'pointer',
+                                pl: 2,
+                                pr: 2,
+                                pt: 1,
+                                pb: 1,
+                                '&:hover': {
+                                    backgroundColor: 'action.hover'
+                                },
+                                transition: 'background-color 0.2s ease-in-out'
+                            }}
+                            onClick={() => handleRequestClick(request)}
+                        >
+                            <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                                {request.item_name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1, fontWeight: 'bold' }}>
+                                {isMatchingRequest(request) 
+                                    ? "내가 현재 가지고 있는 물품이에요" 
+                                    : "가장 가까운 곳에 위치한 대피소에서 필요로 하고 있어요"
+                                }
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {request.shelter?.shelter_name || '대피소 정보 없음'}
+                            </Typography>
                             
                             {request.description && (
                                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                                     {request.description}
                                 </Typography>
                             )}
-                        </CardContent>
-                    </Card>
+                        </Box>
+                        
+                        {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
+                        {index < allRequests.length - 1 && (
+                            <Box sx={{ 
+                                height: '1px', 
+                                backgroundColor: 'divider'
+                            }} />
+                        )}
+                    </Box>
                 ))}
             </Box>
 

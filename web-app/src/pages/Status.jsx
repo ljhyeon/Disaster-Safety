@@ -12,8 +12,6 @@ import {
     Divider
 } from '@mui/material';
 import { 
-    LocationOn, 
-    Schedule, 
     CheckCircle, 
     Cancel, 
     Pending, 
@@ -22,6 +20,7 @@ import {
 
 import { getReliefSuppliesByUser, updateSupplyTracking, RELIEF_SUPPLY_STATUS } from '../services/reliefService';
 import { TrackingDialog } from '../components/TrackingDialog';
+import { TrackingViewDialog } from '../components/TrackingViewDialog';
 import { useAuthStore } from '../store/authStore';
 
 export function Status() {
@@ -29,6 +28,7 @@ export function Status() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [trackingOpen, setTrackingOpen] = useState(false);
+    const [trackingViewOpen, setTrackingViewOpen] = useState(false);
     const [selectedSupply, setSelectedSupply] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     
@@ -59,10 +59,15 @@ export function Status() {
         }
     };
 
-    // 송장번호 등록 모달 열기
+    // 송장번호 등록/조회 모달 열기
     const handleTrackingClick = (supply) => {
         setSelectedSupply(supply);
-        setTrackingOpen(true);
+        // 운송장이 등록되어 있으면 조회 모달, 없으면 등록 모달
+        if (supply.courier_company && supply.tracking_number) {
+            setTrackingViewOpen(true);
+        } else {
+            setTrackingOpen(true);
+        }
     };
 
     // 송장번호 등록 처리
@@ -172,63 +177,7 @@ export function Status() {
     }
 
     return (
-        <Box sx={{ p: 2 }}>
-            {/* 헤더 */}
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h5" component="h1">
-                    나의 공급 이력
-                </Typography>
-                <Button variant="outlined" size="small" onClick={loadSupplies}>
-                    새로고침
-                </Button>
-            </Box>
-
-            {/* 통계 카드 */}
-            <Box sx={{ mb: 3 }}>
-                <Card>
-                    <CardContent>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            공급 현황
-                        </Typography>
-                        <Stack direction="row" spacing={3} justifyContent="space-around">
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="primary.main">
-                                    {statistics.total}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    총 공급
-                                </Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="warning.main">
-                                    {statistics.pending}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    대기중
-                                </Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="primary.main">
-                                    {statistics.shipped}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    배송중
-                                </Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography variant="h4" color="success.main">
-                                    {statistics.delivered}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    전달완료
-                                </Typography>
-                            </Box>
-                        </Stack>
-                    </CardContent>
-                </Card>
-            </Box>
-
-            {/* 공급 이력 목록 */}
+        <Box>
             {supplies.length === 0 ? (
                 <Box sx={{ 
                     display: 'flex', 
@@ -239,37 +188,41 @@ export function Status() {
                     gap: 2
                 }}>
                     <Typography variant="h6" color="text.secondary">
-                        아직 공급 이력이 없습니다
+                        아직 배송 이력이 없습니다
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        구호품 공급 페이지에서 도움이 필요한 대피소를 도와주세요
+                        구호품 배송 페이지에서 도움이 필요한 대피소를 도와주세요
                     </Typography>
                 </Box>
             ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {supplies.map((supply) => {
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    {supplies.map((supply, index) => {
                         const statusInfo = getStatusInfo(supply.status);
                         
                         return (
-                            <Card key={supply.id}>
-                                <CardContent>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Box key={supply.id}>
+                                <Box 
+                                    sx={{ 
+                                        cursor: 'pointer',
+                                        pl: 2,
+                                        pr: 2,
+                                        pt: 1,
+                                        pb: 1,
+                                        '&:hover': {
+                                            backgroundColor: 'action.hover'
+                                        },
+                                        transition: 'background-color 0.2s ease-in-out'
+                                    }}
+                                    onClick={() => handleTrackingClick(supply)}
+                                >
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                                         <Box sx={{ flex: 1 }}>
-                                            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+                                            <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 'bold' }}>
                                                 {supply.item_name}
                                             </Typography>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                                <LocationOn fontSize="small" color="action" />
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {supply.shelter?.shelter_name || '대피소 정보 없음'}
-                                                </Typography>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Schedule fontSize="small" color="action" />
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {formatDate(supply.created_at)}
-                                                </Typography>
-                                            </Box>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {supply.shelter?.shelter_name || '대피소 정보 없음'}
+                                            </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                                             <Chip 
@@ -279,30 +232,11 @@ export function Status() {
                                                 icon={statusInfo.icon}
                                             />
                                             <Typography variant="body2" color="text.secondary">
-                                                공급량: {supply.supplied_quantity} {supply.unit}
+                                                배송 수량: {supply.supplied_quantity} {supply.unit}
                                             </Typography>
                                         </Box>
                                     </Box>
-                                    
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                            <Chip 
-                                                label={supply.category}
-                                                variant="outlined"
-                                                size="small"
-                                            />
-                                            <Chip 
-                                                label={supply.subcategory}
-                                                variant="outlined"
-                                                size="small"
-                                            />
-                                        </Box>
-                                        <Typography variant="body2" color="text.secondary">
-                                            요청량: {supply.requested_quantity} {supply.unit}
-                                        </Typography>
-                                    </Box>
 
-                                    {/* 송장 정보 표시 */}
                                     {supply.courier_company && supply.tracking_number && (
                                         <Box sx={{ mt: 2, p: 1, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
                                             <Typography variant="body2" fontWeight="bold" color="primary">
@@ -313,35 +247,21 @@ export function Status() {
                                             </Typography>
                                         </Box>
                                     )}
-
-                                    {/* 송장번호 등록 버튼 */}
-                                    {supply.status === 'pending' && (
-                                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                                            <Button 
-                                                variant="contained" 
-                                                size="small"
-                                                onClick={() => handleTrackingClick(supply)}
-                                            >
-                                                송장번호 등록
-                                            </Button>
-                                        </Box>
-                                    )}
-                                    
-                                    {supply.supplier_message && (
-                                        <Box sx={{ mt: 2, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                메시지: {supply.supplier_message}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                </CardContent>
-                            </Card>
+                                </Box>
+                                
+                                {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
+                                {index < supplies.length - 1 && (
+                                    <Box sx={{ 
+                                        height: '1px', 
+                                        backgroundColor: 'divider'
+                                    }} />
+                                )}
+                            </Box>
                         );
                     })}
                 </Box>
             )}
 
-            {/* 송장번호 등록 다이얼로그 */}
             <TrackingDialog
                 open={trackingOpen}
                 onClose={() => setTrackingOpen(false)}
@@ -351,6 +271,12 @@ export function Status() {
                 quantity={selectedSupply?.supplied_quantity}
                 unit={selectedSupply?.unit}
                 loading={submitting}
+            />
+
+            <TrackingViewDialog
+                open={trackingViewOpen}
+                onClose={() => setTrackingViewOpen(false)}
+                supply={selectedSupply}
             />
         </Box>
     );

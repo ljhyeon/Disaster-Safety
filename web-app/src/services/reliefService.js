@@ -297,8 +297,8 @@ export const addReliefSupplySimple = async (requestId, userId, itemData) => {
       item_name: itemData.item_name,
       category: itemData.category,
       subcategory: itemData.subcategory,
-      requested_quantity: itemData.quantity,
-      supplied_quantity: itemData.quantity,
+      requested_quantity: itemData.requested_quantity || itemData.quantity, // 원래 요청 수량
+      supplied_quantity: itemData.quantity, // 실제 공급 수량
       unit: itemData.unit,
       priority: itemData.priority,
       supplier_name: '', // 나중에 송장번호 등록 시 입력
@@ -541,17 +541,15 @@ export const getReliefSupplyStatistics = async (shelterId = null) => {
 // 사용자 희망 기부 물품 등록
 export const addUserDonationItem = async (userId, itemData) => {
   try {
-    const { item, quantity, unit } = itemData;
+    const { item } = itemData;
     
-    if (!userId || !item || !quantity || !unit) {
+    if (!userId || !item) {
       throw new Error('필수 필드가 누락되었습니다.');
     }
 
     const donationDoc = {
       user_id: userId,
       item_name: item,
-      quantity: quantity,
-      unit: unit,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       status: 'active' // active, inactive
