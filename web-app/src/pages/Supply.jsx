@@ -312,13 +312,13 @@ export function Supply() {
                             <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 'bold' }}>
                                 {request.item_name}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1, fontWeight: 'bold' }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1}}>
                                 {isMatchingRequest(request) 
                                     ? "내가 현재 가지고 있는 물품이에요" 
                                     : "가장 가까운 곳에 위치한 대피소에서 필요로 하고 있어요"
                                 }
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="caption" color="text.secondary">
                                 {request.shelter?.shelter_name || '대피소 정보 없음'}
                             </Typography>
                             

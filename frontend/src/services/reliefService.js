@@ -514,4 +514,237 @@ export const getReliefCategoryStatistics = async (shelterId) => {
       }
     };
   }
+};
+
+// 구호품 요청별 배송 현황 조회
+export const getReliefSuppliesByRequest = async (requestId) => {
+  try {
+    if (!requestId) {
+      return {
+        success: false,
+        error: {
+          code: 'missing-request-id',
+          message: '요청 ID가 필요합니다.'
+        }
+      };
+    }
+
+    const q = query(
+      collection(db, 'relief_supplies'),
+      where('request_id', '==', requestId)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    const supplies = [];
+    querySnapshot.forEach((doc) => {
+      supplies.push(doc.data());
+    });
+    
+    // 클라이언트에서 정렬 (created_at 기준 내림차순)
+    supplies.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    return {
+      success: true,
+      supplies: supplies
+    };
+  } catch (error) {
+    console.error('구호품 요청별 배송 현황 조회 실패:', error);
+    return {
+      success: false,
+      error: {
+        code: error.code || 'relief-supplies-by-request-failed',
+        message: error.message || '구호품 요청별 배송 현황 조회 중 오류가 발생했습니다.'
+      }
+    };
+  }
+};
+
+// 대피소별 구호품 요청과 배송 현황 통합 조회
+export const getReliefRequestsWithSupplyStatus = async (shelterId) => {
+  try {
+    if (!shelterId) {
+      return {
+        success: false,
+        error: {
+          code: 'missing-shelter-id',
+          message: '대피소 ID가 필요합니다.'
+        }
+      };
+    }
+
+    // 구호품 요청 조회
+    const requestsQuery = query(
+      collection(db, 'relief_requests'),
+      where('shelter_id', '==', shelterId)
+    );
+    
+    // 구호품 배송 조회
+    const suppliesQuery = query(
+      collection(db, 'relief_supplies'),
+      where('shelter_id', '==', shelterId)
+    );
+
+    const [requestsSnapshot, suppliesSnapshot] = await Promise.all([
+      getDocs(requestsQuery),
+      getDocs(suppliesQuery)
+    ]);
+    
+    const requests = [];
+    const supplies = [];
+
+    requestsSnapshot.forEach((doc) => {
+      requests.push(doc.data());
+    });
+
+    suppliesSnapshot.forEach((doc) => {
+      supplies.push(doc.data());
+    });
+
+    // 요청별로 배송 현황 계산
+    const requestsWithSupplyStatus = requests.map(request => {
+      // 해당 요청에 대한 배송 기록 필터링
+      const relatedSupplies = supplies.filter(supply => 
+        supply.request_id === request.request_id
+      );
+
+      // 요청 항목별 배송 현황 계산
+      const itemsWithSupplyStatus = request.relief_items.map(requestedItem => {
+        // 동일한 항목의 배송 기록들 찾기
+        const itemSupplies = relatedSupplies.filter(supply => 
+          supply.item_name === requestedItem.item &&
+          supply.category === requestedItem.category
+        );
+
+        // 배송된 총 수량 계산
+        const totalSupplied = itemSupplies.reduce((sum, supply) => 
+          sum + (supply.supplied_quantity || 0), 0
+        );
+
+        return {
+          ...requestedItem,
+          supplied_quantity: totalSupplied,
+          supply_rate: requestedItem.quantity > 0 ? 
+            Math.round((totalSupplied / requestedItem.quantity) * 100) : 0,
+          supply_records: itemSupplies
+        };
+      });
+
+      // 전체 요청 대비 배송률 계산
+      const totalRequested = request.relief_items.reduce((sum, item) => sum + item.quantity, 0);
+      const totalSupplied = itemsWithSupplyStatus.reduce((sum, item) => sum + item.supplied_quantity, 0);
+      const overallSupplyRate = totalRequested > 0 ? 
+        Math.round((totalSupplied / totalRequested) * 100) : 0;
+
+      return {
+        ...request,
+        relief_items_with_supply: itemsWithSupplyStatus,
+        total_requested: totalRequested,
+        total_supplied: totalSupplied,
+        supply_rate: overallSupplyRate,
+        supply_status: overallSupplyRate >= 100 ? 'completed' : 
+                      overallSupplyRate >= 50 ? 'in_progress' : 'pending'
+      };
+    });
+
+    // 클라이언트에서 정렬 (created_at 기준 내림차순)
+    requestsWithSupplyStatus.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    return {
+      success: true,
+      requests: requestsWithSupplyStatus
+    };
+  } catch (error) {
+    console.error('구호품 요청과 배송 현황 통합 조회 실패:', error);
+    return {
+      success: false,
+      error: {
+        code: error.code || 'relief-requests-with-supply-failed',
+        message: error.message || '구호품 요청과 배송 현황 조회 중 오류가 발생했습니다.'
+      }
+    };
+  }
+};
+
+// 구호품 항목별 배송 현황 요약
+export const getReliefItemSupplySummary = async (shelterId) => {
+  try {
+    if (!shelterId) {
+      return {
+        success: false,
+        error: {
+          code: 'missing-shelter-id',
+          message: '대피소 ID가 필요합니다.'
+        }
+      };
+    }
+
+    const requestsQuery = query(
+      collection(db, 'relief_requests'),
+      where('shelter_id', '==', shelterId)
+    );
+    
+    const suppliesQuery = query(
+      collection(db, 'relief_supplies'),
+      where('shelter_id', '==', shelterId)
+    );
+
+    const [requestsSnapshot, suppliesSnapshot] = await Promise.all([
+      getDocs(requestsQuery),
+      getDocs(suppliesQuery)
+    ]);
+
+    const itemSummary = {};
+
+    // 요청 데이터 집계
+    requestsSnapshot.forEach((doc) => {
+      const request = doc.data();
+      if (request.relief_items && Array.isArray(request.relief_items)) {
+        request.relief_items.forEach(item => {
+          const key = `${item.category}-${item.item}`;
+          if (!itemSummary[key]) {
+            itemSummary[key] = {
+              category: item.category,
+              subcategory: item.subcategory,
+              item_name: item.item,
+              unit: item.unit,
+              total_requested: 0,
+              total_supplied: 0,
+              supply_rate: 0
+            };
+          }
+          itemSummary[key].total_requested += item.quantity || 0;
+        });
+      }
+    });
+
+    // 배송 데이터 집계
+    suppliesSnapshot.forEach((doc) => {
+      const supply = doc.data();
+      const key = `${supply.category}-${supply.item_name}`;
+      if (itemSummary[key]) {
+        itemSummary[key].total_supplied += supply.supplied_quantity || 0;
+      }
+    });
+
+    // 배송률 계산
+    Object.values(itemSummary).forEach(item => {
+      if (item.total_requested > 0) {
+        item.supply_rate = Math.round((item.total_supplied / item.total_requested) * 100);
+      }
+    });
+
+    return {
+      success: true,
+      itemSummary: Object.values(itemSummary).sort((a, b) => b.supply_rate - a.supply_rate)
+    };
+  } catch (error) {
+    console.error('구호품 항목별 배송 현황 요약 조회 실패:', error);
+    return {
+      success: false,
+      error: {
+        code: error.code || 'relief-item-supply-summary-failed',
+        message: error.message || '구호품 항목별 배송 현황 요약 조회 중 오류가 발생했습니다.'
+      }
+    };
+  }
 }; 

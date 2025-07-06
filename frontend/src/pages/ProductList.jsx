@@ -8,7 +8,7 @@ import { RequestCardList } from '../components/RequestCardList'
 
 const { Title, } = Typography
 
-import { getReliefRequestsByShelter } from '../services/reliefService';
+import { getReliefRequestsWithSupplyStatus } from '../services/reliefService';
 
 const ProductList = () => {
     const navigate = useNavigate()
@@ -37,25 +37,26 @@ const ProductList = () => {
             }
 
             try {
-                const result = await getReliefRequestsByShelter(currentShelterId)
+                const result = await getReliefRequestsWithSupplyStatus(currentShelterId)
                 
                 if (result.success) {
-                    // Firestore 데이터를 RequestCard 형태로 변환
+                    // 배송 현황이 포함된 데이터를 RequestCard 형태로 변환
                     const transformedData = result.requests.map((request, index) => {
                         // 구호품 목록을 문자열로 변환
                         const itemNames = request.relief_items.map(item => item.item).join(', ')
-                        const totalQuantity = request.relief_items.reduce((sum, item) => sum + item.quantity, 0)
                         
                         return {
                             id: request.request_id,
                             name: itemNames,
-                            description: `${request.relief_items.length}개 항목 • 총 ${totalQuantity}개`,
+                            description: `${request.relief_items.length}개 항목 • 총 ${request.total_requested}개 요청`,
                             requestDate: new Date(request.created_at).toLocaleDateString(),
-                            currentStock: 0, // 현재는 0으로 설정 (추후 공급 데이터와 연계)
-                            targetStock: totalQuantity,
-                            progress: 0, // 현재는 0%로 설정 (추후 공급률 계산)
-                            status: request.status,
-                            priority: request.priority
+                            currentStock: request.total_supplied, // 실제 배송된 수량
+                            targetStock: request.total_requested, // 요청된 수량
+                            progress: request.supply_rate, // 실제 배송률
+                            status: request.supply_status, // 배송 상태 (completed, in_progress, pending)
+                            priority: request.priority,
+                            // 추가 정보
+                            supplyDetails: request.relief_items_with_supply
                         }
                     })
                     setRequests(transformedData)
