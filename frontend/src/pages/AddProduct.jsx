@@ -1,9 +1,9 @@
-import { Typography, Input, Button, Form, message, Space, Card, Select, Row, Col, InputNumber } from 'antd'
+import { Typography, Input, Button, Form, message, Space, Card, Select, Row, Col, InputNumber, Tag, Alert, Divider } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { StatusList } from '../components/StatusList'
 
-const { Title, } = Typography
+const { Title, Text } = Typography
 const { Option } = Select
 
 import { useShelterStore } from '../store/useShelterStore'
@@ -21,7 +21,6 @@ const AddProduct = () => {
     const { user } = useAuthStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState('')
-    const [reliefItems, setReliefItems] = useState([])
 
     // URL 파라미터의 id를 store에 설정
     useEffect(() => {
@@ -37,73 +36,37 @@ const AddProduct = () => {
         form.setFieldValue('item', undefined)
     }
 
-    // 구호품 아이템 추가
-    const addReliefItem = () => {
-        const values = form.getFieldsValue()
-        const { category, subcategory, item, quantity, unit, priority, notes } = values
-
-        if (!category || !subcategory || !item || !quantity || !unit) {
-            message.error('모든 구호품 정보를 입력해주세요.')
-            return
-        }
-
-        const newItem = {
-            category,
-            subcategory,
-            item,
-            quantity: parseInt(quantity),
-            unit,
-            priority: priority || 'normal',
-            notes: notes || ''
-        }
-
-        setReliefItems([...reliefItems, newItem])
-        
-        // 폼 일부 필드 초기화 (카테고리는 유지)
-        form.setFieldsValue({
-            subcategory: undefined,
-            item: '',
-            quantity: undefined,
-            unit: '',
-            notes: ''
-        })
-        
-        message.success('구호품이 목록에 추가되었습니다.')
-    }
-
-    // 구호품 아이템 제거
-    const removeReliefItem = (index) => {
-        const newItems = reliefItems.filter((_, i) => i !== index)
-        setReliefItems(newItems)
-        message.success('구호품이 목록에서 제거되었습니다.')
-    }
-
     const handleSubmit = async () => {
-        if (reliefItems.length === 0) {
-            message.error('최소 1개 이상의 구호품을 추가해주세요.')
-            return
-        }
-
-        const currentShelterId = selectedId || id
-        if (!currentShelterId) {
-            message.error('대피소가 선택되지 않았습니다.')
-            return
-        }
-
-        if (!user?.uid) {
-            message.error('사용자 정보가 없습니다. 다시 로그인해주세요.')
-            return
-        }
-
-        setIsSubmitting(true)
-        
         try {
+            const values = await form.validateFields()
+            
+            const currentShelterId = selectedId || id
+            if (!currentShelterId) {
+                message.error('대피소가 선택되지 않았습니다.')
+                return
+            }
+
+            if (!user?.uid) {
+                message.error('사용자 정보가 없습니다. 다시 로그인해주세요.')
+                return
+            }
+
+            setIsSubmitting(true)
+            
             const requestData = {
                 shelterId: currentShelterId,
-                reliefItems: reliefItems,
+                reliefItems: [{
+                    category: values.category,
+                    subcategory: values.subcategory,
+                    item: values.item,
+                    quantity: parseInt(values.quantity),
+                    unit: values.unit,
+                    priority: values.priority || 'normal',
+                    notes: values.notes || ''
+                }],
                 requesterId: user.uid,
-                priority: 'normal',
-                notes: '구호품 요청'
+                priority: values.priority || 'normal',
+                notes: values.notes || '구호품 요청'
             }
 
             const result = await createReliefRequest(requestData)
@@ -115,7 +78,11 @@ const AddProduct = () => {
                 message.error(result.error?.message || '등록 중 오류가 발생했습니다.')
             }
         } catch (error) {
-            message.error('등록 중 오류가 발생했습니다.')
+            if (error.errorFields) {
+                message.error('필수 정보를 모두 입력해주세요.')
+            } else {
+                message.error('등록 중 오류가 발생했습니다.')
+            }
         } finally {
             setIsSubmitting(false)
         }
@@ -155,6 +122,60 @@ const AddProduct = () => {
         { label: '낮음', value: 'low' }
     ]
 
+    // AI 추천 더미 데이터 
+    const getAIRecommendations = () => {
+        return {
+            predictions: [
+                {
+                    category: "식품",
+                    item: "생수",
+                    currentStock: 50,
+                    predictedNeed: 600,
+                    shortage: 550,
+                    unit: "L",
+                    priority: "urgent",
+                    reason: "1인당 일일 3L 기준, 5일간 필요량 산정"
+                },
+                {
+                    category: "식품", 
+                    item: "컵라면",
+                    currentStock: 20,
+                    predictedNeed: 400,
+                    shortage: 380,
+                    unit: "개",
+                    priority: "high",
+                    reason: "간편식 선호도 높음, 조리 시설 제한적"
+                },
+                {
+                    category: "위생용품",
+                    item: "화장지",
+                    currentStock: 10,
+                    predictedNeed: 60,
+                    shortage: 50,
+                    unit: "롤",
+                    priority: "high",
+                    reason: "홍수 재난 시 위생용품 소모량 증가"
+                }
+            ],
+            historicalCases: [
+                {
+                    location: "○○지역 대피소",
+                    disaster: "홍수",
+                    year: "2023",
+                    items: ["담요", "수건", "의류"]
+                },
+                {
+                    location: "△△지역 대피소", 
+                    disaster: "태풍",
+                    year: "2022",
+                    items: ["손전등", "건전지", "휴대용 라디오"]
+                }
+            ]
+        }
+    }
+
+    const aiRecommendations = getAIRecommendations()
+
     return (
         <>
             <Title level={1}>
@@ -174,9 +195,8 @@ const AddProduct = () => {
                             onClick={handleSubmit}
                             style={{ backgroundColor: '#001f91' }}
                             loading={isSubmitting}
-                            disabled={reliefItems.length === 0}
                         >
-                            등록 ({reliefItems.length}개 항목)
+                            구호품 등록
                         </Button>
                     </Space>
                 </Form.Item>
@@ -261,7 +281,7 @@ const AddProduct = () => {
                 </Row>
 
                 <Row gutter={16}>
-                    <Col span={20}>
+                    <Col span={24}>
                         <Form.Item
                             label="조건/메모"
                             name="notes"
@@ -269,63 +289,104 @@ const AddProduct = () => {
                             <Input placeholder="예: 크기 관계 없음, 유통기한 1개월 이상 등" />
                         </Form.Item>
                     </Col>
-                    <Col span={4}>
-                        <Form.Item label=" " style={{ marginTop: '30px' }}>
-                            <Button 
-                                type="dashed" 
-                                onClick={addReliefItem}
-                                style={{ width: '100%' }}
-                            >
-                                목록에 추가
-                            </Button>
-                        </Form.Item>
-                    </Col>
                 </Row>
             </Form>
 
-            {/* 추가된 구호품 목록 */}
-            {reliefItems.length > 0 && (
-                <Card title={`등록할 구호품 목록 (${reliefItems.length}개)`} style={{ marginTop: '24px' }}>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                        {reliefItems.map((item, index) => (
-                            <div key={index} style={{ 
-                                padding: '12px', 
-                                borderBottom: index < reliefItems.length - 1 ? '1px solid #f0f0f0' : 'none',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                <div>
-                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                        {item.item} ({item.quantity}{item.unit})
+            {/* AI 추천 정보 */}
+            <Card 
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>구호품 수요 예측 및 추천 AI 결과</span>
+                    </div>
+                } 
+                style={{ marginTop: '12px' }}
+            >
+                <Divider orientation="left" style={{ marginTop: '0px' }}>예측 부족 물자</Divider>
+                
+                <div style={{ marginBottom: '16px' }}>
+                    {aiRecommendations.predictions.map((pred, index) => (
+                        <Card 
+                            key={index}
+                            size="small" 
+                            style={{ marginBottom: '8px' }}
+                            className={pred.priority === 'urgent' ? 'urgent-card' : ''}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <Text strong>{pred.item}</Text>
+                                        <Tag color={pred.priority === 'urgent' ? 'red' : pred.priority === 'high' ? 'orange' : 'green'}>
+                                            {pred.priority === 'urgent' ? '긴급' : pred.priority === 'high' ? '높음' : '보통'}
+                                        </Tag>
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>
-                                        {item.category} &gt; {item.subcategory} • 
-                                        우선순위: {
-                                            item.priority === 'urgent' ? '긴급' :
-                                            item.priority === 'high' ? '높음' :
-                                            item.priority === 'normal' ? '보통' : '낮음'
-                                        } • 
-                                        {item.notes && `메모: ${item.notes}`}
+                                    <div style={{ fontSize: '13px', color: '#666' }}>
+                                        현재 보유: {pred.currentStock}{pred.unit} → 필요 예상: {pred.predictedNeed}{pred.unit}
+                                    </div>
+                                    <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>
+                                        <Text type="danger">부족 예상: {pred.shortage}{pred.unit}</Text>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                                        {pred.reason}
                                     </div>
                                 </div>
                                 <Button 
-                                    type="text" 
-                                    danger 
+                                    type="dashed" 
                                     size="small"
-                                    onClick={() => removeReliefItem(index)}
+                                    onClick={() => {
+                                        // 해당 아이템을 폼에 자동 설정
+                                        const categoryKey = pred.category === '식품' ? 'food' : pred.category === '위생용품' ? 'hygiene' : 'other'
+                                        form.setFieldsValue({
+                                            category: RELIEF_CATEGORIES[categoryKey],
+                                            item: pred.item,
+                                            quantity: pred.shortage,
+                                            unit: pred.unit,
+                                            priority: pred.priority
+                                        })
+                                        setSelectedCategory(RELIEF_CATEGORIES[categoryKey])
+                                        message.success('추천 아이템이 폼에 설정되었습니다')
+                                    }}
                                 >
-                                    제거
+                                    폼에 적용
                                 </Button>
                             </div>
-                        ))}
-                    </div>
-                </Card>
-            )}
+                        </Card>
+                    ))}
+                </div>
 
-            <Card title="추천 정보" style={{ marginTop: '24px' }}>
-                <StatusList cnt={recommendData.length} data={recommendData} />
+                <Divider orientation="left">유사 사례 기반 추천</Divider>
+                
+                <div>
+                    <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>
+                        현재 대피소와 유사한 과거 재난 사례 분석 결과
+                    </Text>
+                    {aiRecommendations.historicalCases.map((case_, index) => (
+                        <div key={index} style={{ marginBottom: '8px', padding: '8px', background: '#f9f9f9', borderRadius: '4px' }}>
+                            <Text strong style={{ fontSize: '13px' }}>
+                                {case_.location} ({case_.year}년 {case_.disaster})
+                            </Text>
+                            <div style={{ marginTop: '4px' }}>
+                                <Text style={{ fontSize: '12px', color: '#666' }}>추가 필요 물품: </Text>
+                                {case_.items.map((item, idx) => (
+                                    <Tag key={idx} size="small" style={{ fontSize: '11px' }}>{item}</Tag>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div style={{ marginTop: '16px', padding: '8px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '4px' }}>
+                    <Text style={{ fontSize: '12px', color: '#52c41a' }}>
+                        💡 AI 분석 기반으로 예측된 정보입니다. 실제 상황에 맞게 조정해서 사용하세요.
+                    </Text>
+                </div>
             </Card>
+
+            <style jsx>{`
+                .urgent-card {
+                    border-left: 4px solid #ff4d4f;
+                    background-color: #fff2f0;
+                }
+            `}</style>
         </>
     )
 }

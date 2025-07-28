@@ -48,7 +48,7 @@ export default function MainLayout() {
     }
 
     return (
-        <Layout style={{ height: '100vh', width: '100vw' }}>
+        <Layout style={{ height: '100vh', width: '100vw', overflowX: 'hidden' }}>
             <Sider 
                 breakpoint="lg" 
                 collapsedWidth="80" 
@@ -114,7 +114,7 @@ export default function MainLayout() {
                     </Button>
                 </div>
             </Sider>
-            <Layout style={{ marginLeft: 200 }}>
+            <Layout style={{ marginLeft: 200, overflowX: 'hidden' }}>
                 <Header style={{ background: '#fff', padding: 0, fontSize: '24px', paddingLeft: '20px' }}>
                     <Title level={2} style={{ color: COLORS.gray7 }}>
                         {name}

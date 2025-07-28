@@ -9,14 +9,35 @@ import DonutChart from '../components/DonutChart'
 import { NotificationList } from '../components/NotificationList'
 
 import { getShelter } from '../services/shelterService'
-import { getReliefStatistics, getReliefRequestsByShelter } from '../services/reliefService'
+import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShelter } from '../services/reliefService'
+import { getUser } from '../services/userService'
 
 const Main = () => {
     const selectedId = useShelterStore((s)=>s.selectedId)
     const [shelter, setShelter] = useState(null)
     const [statistics, setStatistics] = useState(null)
     const [recentRequests, setRecentRequests] = useState([])
+    const [supplyLogs, setSupplyLogs] = useState([])
+    const [notifications, setNotifications] = useState([])
     const [isLoading, setIsLoading] = useState(true)
+
+    // 시간 차이 계산 함수
+    const getTimeAgo = (dateString) => {
+        const now = new Date()
+        const past = new Date(dateString)
+        const diffMs = now - past
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+        const diffDays = Math.floor(diffHours / 24)
+        const remainingHours = diffHours % 24
+
+        if (diffHours < 24) {
+            return `${diffHours}시간 전`
+        } else if (remainingHours === 0) {
+            return `${diffDays}일 전`
+        } else {
+            return `${diffDays}일 ${remainingHours}시간 전`
+        }
+    }
 
     // 대피소 정보 및 통계 로드
     useEffect(() => {
@@ -27,11 +48,12 @@ const Main = () => {
             }
 
             try {
-                // 대피소 정보, 통계, 최근 요청 병렬 조회
-                const [shelterResult, statisticsResult, requestsResult] = await Promise.all([
+                // 대피소 정보, 통계, 최근 요청, 구호품 공급 로그 병렬 조회
+                const [shelterResult, statisticsResult, requestsResult, suppliesResult] = await Promise.all([
                     getShelter(selectedId),
                     getReliefStatistics(selectedId, 7), // 최근 7일
-                    getReliefRequestsByShelter(selectedId)
+                    getReliefRequestsByShelter(selectedId),
+                    getReliefSuppliesByShelter(selectedId)
                 ])
 
                 if (shelterResult.success) {
@@ -61,6 +83,90 @@ const Main = () => {
                     // 요청 조회 실패 시 빈 배열 설정
                     setRecentRequests([])
                 }
+
+                if (suppliesResult.success) {
+                    // 구호품 공급 로그에 사용자 정보 추가
+                    const suppliesWithUserInfo = await Promise.all(
+                        (suppliesResult.supplies || []).slice(0, 10).map(async (supply) => {
+                            if (supply.supplier_id) {
+                                try {
+                                    const userResult = await getUser(supply.supplier_id)
+                                    return {
+                                        ...supply,
+                                        supplier_user_info: userResult.success ? userResult.user : null
+                                    }
+                                } catch (error) {
+                                    console.warn('사용자 정보 조회 실패:', error)
+                                    return supply
+                                }
+                            }
+                            return supply
+                        })
+                    )
+                    setSupplyLogs(suppliesWithUserInfo)
+                } else {
+                    console.error('구호품 공급 로그 조회 실패:', suppliesResult.error)
+                    // 구호품 공급 로그 조회 실패 시 빈 배열 설정
+                    setSupplyLogs([])
+                }
+
+                // 알림마당 데이터 통합 및 정렬
+                const allNotifications = []
+                
+                // 구호품 요청 알림 추가
+                if (requestsResult.success) {
+                    (requestsResult.requests || []).forEach(request => {
+                        // 요청자 정보 조회 (필요시 추가 구현)
+                        const requesterName = request.requester_name || '관리자'
+                        const itemsText = request.relief_items?.map(item => 
+                            `${item.item || item.item_name} ${item.quantity}${item.unit || '개'}`
+                        ).join(', ') || '구호품'
+                        
+                        allNotifications.push({
+                            id: `request_${request.request_id}`,
+                            type: 'request',
+                            message: `${requesterName}님이 필요 구호품으로 ${itemsText} 등록하셨습니다.`,
+                            timestamp: request.created_at,
+                            data: request
+                        })
+                    })
+                }
+
+                // 구호품 공급 알림 추가
+                if (suppliesResult.success) {
+                    const suppliesWithUserInfo = await Promise.all(
+                        (suppliesResult.supplies || []).map(async (supply) => {
+                            let supplierName = supply.supplier_name || '익명'
+                            
+                            if (supply.supplier_id) {
+                                try {
+                                    const userResult = await getUser(supply.supplier_id)
+                                    if (userResult.success) {
+                                        supplierName = userResult.user.display_name || userResult.user.email || '익명'
+                                    }
+                                } catch (error) {
+                                    console.warn('사용자 정보 조회 실패:', error)
+                                }
+                            }
+                            
+                            const suffix = supply.item_name && supply.item_name[supply.item_name.length - 1] && ['ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].includes(supply.item_name[supply.item_name.length - 1]) ? '를' : '을';
+                            return {
+                                id: `supply_${supply.id || supply.supply_id}`,
+                                type: 'supply',
+                                message: `${supplierName}님이 필요 구호품 중 ${supply.item_name || '구호품'}${suffix} ${supply.supplied_quantity || 0}${supply.unit || '개'} 배송하였습니다.`,
+                                timestamp: supply.created_at,
+                                data: supply
+                            }
+                        })
+                    )
+                    allNotifications.push(...suppliesWithUserInfo)
+                }
+
+                // 시간순 정렬 (최신순)
+                allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                
+                // 최대 15개만 표시
+                setNotifications(allNotifications.slice(0, 15))
             } catch (error) {
                 message.error('데이터를 불러오는 중 오류가 발생했습니다.')
                 console.error('데이터 로드 오류:', error)
@@ -186,40 +292,41 @@ const Main = () => {
                 </Col>
             </Row>
 
-            {/* 최근 구호품 요청 목록 */}
-            <Card title="최근 구호품 요청" style={{ marginTop: '24px' }}>
-                {recentRequests.length > 0 ? (
-                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                        {recentRequests.map((request, index) => (
-                            <div key={request.request_id} style={{ 
-                                padding: '12px', 
-                                borderBottom: index < recentRequests.length - 1 ? '1px solid #f0f0f0' : 'none',
+            {/* 알림마당 */}
+            <Card title="알림마당" style={{ marginTop: '24px' }}>
+                {notifications.length > 0 ? (
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        {notifications.map((notification, index) => (
+                            <div key={notification.id} style={{ 
+                                padding: '16px', 
+                                borderBottom: index < notifications.length - 1 ? '1px solid #f0f0f0' : 'none',
                                 display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
+                                alignItems: 'flex-start'
                             }}>
-                                <div>
-                                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                        {request.relief_items?.map(item => item.item).join(', ') || '구호품 정보 없음'}
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: '#666' }}>
-                                        {new Date(request.created_at).toLocaleDateString()} • 
-                                        {request.total_items}개 항목 • 
-                                        우선순위: {request.priority}
-                                    </div>
-                                </div>
                                 <div style={{ 
-                                    padding: '2px 8px', 
-                                    borderRadius: '4px',
-                                    backgroundColor: request.status === 'pending' ? '#fff2e8' : 
-                                                   request.status === 'completed' ? '#f6ffed' : '#f0f0f0',
-                                    color: request.status === 'pending' ? '#d46b08' : 
-                                           request.status === 'completed' ? '#389e0d' : '#666',
-                                    fontSize: '12px'
-                                }}>
-                                    {request.status === 'pending' ? '대기중' : 
-                                     request.status === 'completed' ? '완료' : 
-                                     request.status === 'in_progress' ? '진행중' : '취소'}
+                                    width: '8px', 
+                                    height: '8px', 
+                                    borderRadius: '50%',
+                                    backgroundColor: notification.type === 'request' ? '#1890ff' : '#52c41a',
+                                    marginTop: '6px',
+                                    marginRight: '12px',
+                                    flexShrink: 0
+                                }} />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ 
+                                        fontSize: '14px', 
+                                        lineHeight: '1.5',
+                                        marginBottom: '4px',
+                                        color: '#333'
+                                    }}>
+                                        {notification.message}
+                                    </div>
+                                    <div style={{ 
+                                        fontSize: '12px', 
+                                        color: '#999'
+                                    }}>
+                                        {getTimeAgo(notification.timestamp)}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -230,7 +337,7 @@ const Main = () => {
                         padding: '40px 20px',
                         color: '#999'
                     }}>
-                        최근 구호품 요청이 없습니다.
+                        알림이 없습니다.
                     </div>
                 )}
             </Card>
