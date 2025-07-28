@@ -4,6 +4,7 @@ import { getAllReliefRequests, addReliefSupplySimple, getUserDonationItems } fro
 import { useAuthStore } from "../store/authStore";
 import { RequestDetailDialog } from '../components/RequestDetailDialog';
 import { AcceptedDialog } from '../components/AcceptedDialog';
+import TutorialMain from "../components/tutorials/main";
 
 export function Supply() {
     const [allRequests, setAllRequests] = useState([]);
@@ -14,6 +15,7 @@ export function Supply() {
     const [supplying, setSupplying] = useState(false);
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [acceptedDialogOpen, setAcceptedDialogOpen] = useState(false);
+    const [tutorialOpen, setTutorialOpen] = useState(true);
     
     const { user } = useAuthStore();
 
@@ -353,6 +355,11 @@ export function Supply() {
             <AcceptedDialog
                 open={acceptedDialogOpen}
                 onClose={handleAcceptedDialogClose}
+            />
+
+            <TutorialMain
+                open={tutorialOpen}
+                onClose={() => setTutorialOpen(false)} 
             />
         </Box>
     );
