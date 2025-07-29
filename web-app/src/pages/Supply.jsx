@@ -224,9 +224,6 @@ export function Supply() {
     if (userDonations.length === 0) {
         return (
             <Box>
-                <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
-                    구호품 공급하기
-                </Typography>
                 <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'center', 
@@ -242,16 +239,18 @@ export function Supply() {
                         먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요
                     </Typography>
                 </Box>
+                <TutorialMain
+                open={tutorialOpen}
+                onClose={() => setTutorialOpen(false)} 
+                />
             </Box>
+            
         );
     }
 
     if (allRequests.length === 0) {
         return (
             <Box>
-                <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
-                    구호품 공급하기
-                </Typography>
                 
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="h6" sx={{ mb: 1 }}>
@@ -288,6 +287,10 @@ export function Supply() {
                         새로고침
                     </Button>
                 </Box>
+                <TutorialMain
+                open={tutorialOpen}
+                onClose={() => setTutorialOpen(false)} 
+                />
             </Box>
         );
     }
