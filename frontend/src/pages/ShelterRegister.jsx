@@ -1,4 +1,5 @@
-import { Button, Typography, Form, Input, message, Space, Select, Row, Col, Card } from 'antd'
+import { Button, Typography, Form, Input, message, Space, Select, Row, Col, Card, Upload, Table, Modal, Divider } from 'antd'
+import { UploadOutlined, InboxOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useState } from 'react'
@@ -14,12 +15,35 @@ const ShelterRegister = () => {
     const navigate = useNavigate()
     const { user } = useAuthStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
+    
+    // CSV 업로드 관련 상태
+    const [csvData, setCsvData] = useState([])
+    const [csvColumns, setCsvColumns] = useState([])
+    const [showMappingModal, setShowMappingModal] = useState(false)
+    const [columnMapping, setColumnMapping] = useState({})
+    const [isBulkUploading, setIsBulkUploading] = useState(false)
 
     const disasterTypes = Object.values(DISASTER_TYPES)
 
     const booleanOptions = [
         { label: '여', value: true },
         { label: '부', value: false }
+    ]
+
+    // Firebase 필드 매핑 옵션
+    const firebaseFields = [
+        { label: '대피소명', value: 'shelterName' },
+        { label: '주소', value: 'location' },
+        { label: '위도', value: 'latitude' },
+        { label: '경도', value: 'longitude' },
+        { label: '재난유형', value: 'disasterType' },
+        { label: '수용가능인원', value: 'capacity' },
+        { label: '현재수용인원', value: 'currentOccupancy' },
+        { label: '장애인편의시설', value: 'hasDisabledFacility' },
+        { label: '반려동물수용', value: 'hasPetZone' },
+        { label: '운영상태', value: 'status' },
+        { label: '담당자명', value: 'contactPerson' },
+        { label: '담당자연락처', value: 'contactPhone' }
     ]
 
     const operationStatusOptions = Object.values(SHELTER_STATUS).map(status => ({
@@ -74,6 +98,104 @@ const ShelterRegister = () => {
     const handleReset = () => {
         form.resetFields()
         message.info('폼이 초기화되었습니다.')
+    }
+
+    // CSV 파일 처리
+    const handleCSVUpload = (file) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            const text = e.target.result
+            const lines = text.split('\n').filter(line => line.trim())
+            
+            if (lines.length < 2) {
+                message.error('CSV 파일에 데이터가 충분하지 않습니다.')
+                return
+            }
+            
+            const headers = lines[0].split('|').map(h => h.trim().replace(/"/g, ''))
+            const rows = lines.slice(1).map(line => {
+                const values = line.split('|').map(v => v.trim().replace(/"/g, ''))
+                const row = {}
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || ''
+                })
+                return row
+            })
+            
+            setCsvColumns(headers)
+            setCsvData(rows)
+            setShowMappingModal(true)
+        }
+        reader.readAsText(file, 'utf-8')
+        return false // prevent default upload
+    }
+
+    // 컬럼 매핑 처리
+    const handleMappingConfirm = async () => {
+        const mappedFields = Object.values(columnMapping).filter(Boolean)
+        if (mappedFields.length === 0) {
+            message.error('최소 하나의 필드는 매핑해야 합니다.')
+            return
+        }
+
+        setIsBulkUploading(true)
+        let successCount = 0
+        let errorCount = 0
+
+        try {
+            for (const row of csvData) {
+                const shelterData = {
+                    managerId: user?.uid
+                }
+
+                // 매핑된 필드들 처리
+                Object.entries(columnMapping).forEach(([csvColumn, firebaseField]) => {
+                    if (firebaseField && row[csvColumn]) {
+                        let value = row[csvColumn]
+                        
+                        // 데이터 타입 변환
+                        if (firebaseField === 'latitude' || firebaseField === 'longitude') {
+                            value = parseFloat(value)
+                        } else if (firebaseField === 'capacity' || firebaseField === 'currentOccupancy') {
+                            value = parseInt(value)
+                        } else if (firebaseField === 'hasDisabledFacility' || firebaseField === 'hasPetZone') {
+                            value = value === '여' || value === 'true' || value === '1' || value === 'Y'
+                        }
+                        
+                        shelterData[firebaseField] = value
+                    }
+                })
+
+                // 기본값 설정
+                if (!shelterData.currentOccupancy) shelterData.currentOccupancy = 0
+                if (!shelterData.hasDisabledFacility) shelterData.hasDisabledFacility = false
+                if (!shelterData.hasPetZone) shelterData.hasPetZone = false
+                if (!shelterData.status) shelterData.status = '운영중'
+                if (!shelterData.disasterType) shelterData.disasterType = '지진'
+
+                const result = await createShelter(shelterData)
+                if (result.success) {
+                    successCount++
+                } else {
+                    errorCount++
+                    console.error('대피소 등록 실패:', result.error)
+                }
+            }
+
+            message.success(`총 ${csvData.length}개 중 ${successCount}개 성공, ${errorCount}개 실패`)
+            
+            if (successCount > 0) {
+                setCsvData([])
+                setCsvColumns([])
+                setColumnMapping({})
+                setShowMappingModal(false)
+            }
+        } catch (error) {
+            message.error('벌크 업로드 중 오류가 발생했습니다.')
+            console.error('벌크 업로드 오류:', error)
+        } finally {
+            setIsBulkUploading(false)
+        }
     }
 
     // 샘플 데이터 자동 입력
@@ -150,6 +272,37 @@ const ShelterRegister = () => {
                             샘플 데이터로 빠르게 테스트하거나, 폼을 초기화할 수 있습니다.
                         </div>
                     </Card>
+
+                    <Card 
+                        title="CSV 파일 일괄 업로드" 
+                        size="small" 
+                        style={{ marginBottom: '24px' }}
+                    >
+                        <div style={{ marginBottom: '16px', color: '#666' }}>
+                            CSV 파일을 업로드하여 여러 대피소를 한번에 등록할 수 있습니다.
+                        </div>
+                        <Upload.Dragger
+                            accept=".csv"
+                            beforeUpload={handleCSVUpload}
+                            showUploadList={false}
+                            style={{ marginBottom: '16px' }}
+                        >
+                            <p className="ant-upload-drag-icon">
+                                <InboxOutlined />
+                            </p>
+                            <p className="ant-upload-text">CSV 파일을 클릭하거나 드래그하여 업로드</p>
+                            <p className="ant-upload-hint">
+                                .csv 파일만 지원됩니다. 첫 번째 행은 헤더로 사용됩니다.
+                            </p>
+                        </Upload.Dragger>
+                        {csvData.length > 0 && (
+                            <div style={{ color: '#52c41a' }}>
+                                ✓ {csvData.length}개의 데이터가 로드되었습니다. 매핑을 확인해주세요.
+                            </div>
+                        )}
+                    </Card>
+
+                    <Divider>또는 개별 등록</Divider>
 
                     <Row gutter={16}>
                         <Col span={12}>
@@ -326,12 +479,90 @@ const ShelterRegister = () => {
                     <ul style={{ marginTop: '8px', marginBottom: 0 }}>
                         <li>위도/경도는 Google Maps에서 확인할 수 있습니다.</li>
                         <li>샘플 데이터 버튼으로 빠르게 테스트할 수 있습니다.</li>
+                        <li>CSV 파일 업로드로 여러 대피소를 한번에 등록할 수 있습니다.</li>
                         <li>등록 후 자동으로 홈 화면으로 이동합니다.</li>
                     </ul>
                 </div>
             </div>
+
+            {/* CSV 컬럼 매핑 모달 */}
+            <Modal
+                title="CSV 컬럼 매핑"
+                open={showMappingModal}
+                onCancel={() => setShowMappingModal(false)}
+                onOk={handleMappingConfirm}
+                okText="업로드 시작"
+                cancelText="취소"
+                width={800}
+                confirmLoading={isBulkUploading}
+            >
+                <div style={{ marginBottom: '16px' }}>
+                    <strong>CSV 파일의 컬럼을 Firebase 필드에 매핑해주세요:</strong>
+                    <div style={{ color: '#666', fontSize: '14px', marginTop: '4px' }}>
+                        총 {csvData.length}개의 데이터가 업로드됩니다.
+                    </div>
+                </div>
+                
+                <Table
+                    dataSource={csvColumns.map((column, index) => ({
+                        key: index,
+                        csvColumn: column,
+                        sampleData: csvData[0]?.[column] || '',
+                        mapping: columnMapping[column] || ''
+                    }))}
+                    columns={[
+                        {
+                            title: 'CSV 컬럼명',
+                            dataIndex: 'csvColumn',
+                            key: 'csvColumn',
+                            width: 200
+                        },
+                        {
+                            title: '샘플 데이터',
+                            dataIndex: 'sampleData',
+                            key: 'sampleData',
+                            width: 200,
+                            render: (text) => (
+                                <span style={{ color: '#666' }}>
+                                    {text || '(빈 값)'}
+                                </span>
+                            )
+                        },
+                        {
+                            title: 'Firebase 필드 매핑',
+                            key: 'mapping',
+                            render: (_, record) => (
+                                <Select
+                                    style={{ width: '100%' }}
+                                    placeholder="필드 선택"
+                                    allowClear
+                                    value={columnMapping[record.csvColumn]}
+                                    onChange={(value) => {
+                                        setColumnMapping(prev => ({
+                                            ...prev,
+                                            [record.csvColumn]: value
+                                        }))
+                                    }}
+                                    options={firebaseFields}
+                                />
+                            )
+                        }
+                    ]}
+                    pagination={false}
+                    size="small"
+                />
+                
+                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px' }}>
+                    <strong>💡 매핑 가이드:</strong>
+                    <ul style={{ marginTop: '8px', marginBottom: 0, fontSize: '14px' }}>
+                        <li>필수 필드: 대피소명, 주소, 위도, 경도</li>
+                        <li>장애인편의시설/반려동물수용: '여', 'true', '1', 'Y' → true로 변환</li>
+                        <li>매핑하지 않은 필드는 기본값으로 설정됩니다</li>
+                    </ul>
+                </div>
+            </Modal>
         </div>
     )
 }
 
-export default ShelterRegister 
+export default ShelterRegister
