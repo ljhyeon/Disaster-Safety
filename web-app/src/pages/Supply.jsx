@@ -4,7 +4,7 @@ import { getAllReliefRequests, addReliefSupplySimple, getUserDonationItems } fro
 import { useAuthStore } from "../store/authStore";
 import { RequestDetailDialog } from '../components/RequestDetailDialog';
 import { AcceptedDialog } from '../components/AcceptedDialog';
-import TutorialMain from "../components/tutorials/main";
+// import TutorialMain from "../components/tutorials/main";
 
 export function Supply() {
     const [allRequests, setAllRequests] = useState([]);
@@ -239,10 +239,10 @@ export function Supply() {
                         먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요
                     </Typography>
                 </Box>
-                <TutorialMain
+                {/* <TutorialMain
                 open={tutorialOpen}
                 onClose={() => setTutorialOpen(false)} 
-                />
+                /> */}
             </Box>
             
         );
@@ -360,10 +360,10 @@ export function Supply() {
                 onClose={handleAcceptedDialogClose}
             />
 
-            <TutorialMain
+            {/* <TutorialMain
                 open={tutorialOpen}
                 onClose={() => setTutorialOpen(false)} 
-            />
+            /> */}
         </Box>
     );
 }
