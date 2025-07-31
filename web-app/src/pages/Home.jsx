@@ -16,6 +16,9 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import { useShelterStore } from '../store/shelterStore';
 import { useAuthStore } from '../store/authStore';
 
+// import TutorialHome from '../components/tutorials/home';
+import Tutorial from '../components/tutorials/tutorial';
+
 const customIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
   iconSize: [36, 36],
@@ -32,6 +35,8 @@ export function Home() {
     const [shelters, setShelters] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [tutorialOpen, setTutorialOpen] = useState(true);
 
     // 대피소 데이터 로드
     useEffect(() => {
@@ -233,6 +238,11 @@ export function Home() {
                 open={isLogoutDialogOpen}
                 onClose={handleLogoutCancel}
                 onConfirm={handleLogoutConfirm}
+            />
+
+            <Tutorial
+                open={tutorialOpen}
+                onClose={() => setTutorialOpen(false)} 
             />
         </Box>
     )
