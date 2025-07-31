@@ -26,6 +26,15 @@ const customIcon = new L.Icon({
   popupAnchor: [0, -36],
 });
 
+// 대구시민회관 전용 특별 아이콘 (빨간색, 더 크게, 높은 z-index)
+const specialIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.freepik.com/512/684/684908.png', // 빨간색 마커
+  iconSize: [42, 42], // 더 큰 크기
+  iconAnchor: [21, 42],
+  popupAnchor: [0, -42],
+  zIndexOffset: 9999, // 최대 z-index
+});
+
 export function Home() {
     const navigate = useNavigate();
     const { setShelterInfo } = useShelterStore(); // 업데이트된 store 사용
@@ -190,7 +199,7 @@ export function Home() {
                 ) : (
                     <MapContainer
                         center={[35.8714, 128.6014]} // 대구 중심 좌표
-                        zoom={12}
+                        zoom={14}
                         style={{ height: '100%', width: '100%' }}
                         scrollWheelZoom={false}
                     >
@@ -198,11 +207,15 @@ export function Home() {
                         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                     />
-                    {shelters.map((shelter, idx) => (
+                    {shelters.map((shelter, idx) => {
+                        // 대구시민회관인지 확인
+                        const isDaeguCitizenHall = shelter.shelter_name && shelter.shelter_name.includes('대구시민회관');
+                        
+                        return (
                         <Marker
                             key={shelter.id || idx}
                             position={shelter.position}
-                            icon={customIcon}
+                            icon={isDaeguCitizenHall ? specialIcon : customIcon}
                         >
                             <Popup>
                                 <Box textAlign="center">
@@ -229,7 +242,8 @@ export function Home() {
                                 </Box>
                             </Popup>
                         </Marker>
-                    ))}
+                        );
+                    })}
                     </MapContainer>
                 )}
             </Box>
