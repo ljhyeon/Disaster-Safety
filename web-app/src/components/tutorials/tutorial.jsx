@@ -1,6 +1,6 @@
 // tutorial.jsx
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogActions, Button, Box, } from '@mui/material';
+import { Dialog, DialogContent, DialogActions, Button, Box, DialogTitle, Typography, } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
@@ -40,9 +40,33 @@ export default function Tutorial({ open, onClose }) {
   const step = tutorialSteps[currentStep];
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogContent dividers>
-        <img src={step.image} width='100%'/>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      fullWidth 
+      maxWidth="md"
+      sx={{
+        '& .MuiDialog-paper': {
+          width: '95%',
+          height: '100vh',
+          margin: '0'
+        }
+      }}
+    >
+      <DialogTitle sx={{textAlign: 'center', paddingTop:'10px',paddingBottom:'10px'}}>
+        <Typography sx={{fontWeight: 'bold', fontSize: '1.2rem'}}> 이어드림 앱 사용 방법 </Typography>
+      </DialogTitle>
+      <DialogContent dividers sx={{paddingTop: '0px', paddingBottom: '0px'}}>
+        <Box sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
+          <img 
+            src={step.image} 
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain'
+            }}
+          />
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
