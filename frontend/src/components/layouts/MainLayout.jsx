@@ -1,7 +1,7 @@
 // components/layouts/MainLayout.jsx
 import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { DashboardOutlined, WarningOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons'
+import { DashboardOutlined, WarningOutlined, UserOutlined, HomeOutlined } from '@ant-design/icons'
 import { useShelterStore } from '../../store/useShelterStore'
 import { useAuthStore } from '../../store/authStore'
 import { COLORS } from '../../styles/colors'
@@ -95,7 +95,7 @@ export default function MainLayout() {
                         }
                     ]}
                 />
-                {/* ✅ 하단 로그아웃 버튼 */}
+                {/* ✅ 하단 홈으로 버튼 */}
                 <div
                 style={{
                     position: 'absolute',
@@ -106,11 +106,14 @@ export default function MainLayout() {
                 >
                     <Button
                         type="text"
-                        icon={<LogoutOutlined />}
+                        icon={<HomeOutlined />}
                         style={{ color: COLORS.gray2 }}
-                        onClick={handleLogout}
+                        onClick={() => {
+                            navigate('/home')
+                            setName('')
+                        }}
                     >
-                        로그아웃
+                        홈으로
                     </Button>
                 </div>
             </Sider>
