@@ -22,6 +22,12 @@ const SignUp = () => {
             return
         }
         
+        // 관리자 승인 안내 팝업 표시
+        alert('관리자 승인 후 회원가입 처리됩니다.')
+        navigate('/login')
+        
+        // 기존 회원가입 코드 (주석 처리)
+        /*
         // 공무원 인증서 파일 확인 (현재는 업로드된 파일명만 저장)
         let certFile = null
         if (file && file.length > 0) {
@@ -55,6 +61,7 @@ const SignUp = () => {
         } finally {
             setIsLoading(false)
         }
+        */
     }
     return (
         <Layout style={{ minHeight: '100vh', width: '100vw', backgroundColor: "white" }}>
