@@ -222,16 +222,18 @@ const ShelterRegister = () => {
     return (
         <div style={{ 
             minHeight: '100vh', 
+            minWidth: '100vw',
             backgroundColor: '#f5f5f5', 
-            padding: '24px'
+            overflowX: 'hidden'
         }}>
             <div style={{ 
-                maxWidth: '1200px', 
+                maxWidth: '100%', 
                 margin: '0 auto',
                 backgroundColor: 'white',
-                padding: '32px',
+                padding: '16px',
                 borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                overflowX: 'hidden'
             }}>
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                     <Title level={1} style={{ color: COLORS.primary }}>
