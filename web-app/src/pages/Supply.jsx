@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Chip, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, Button, Chip, CircularProgress, Alert, Tabs, Tab } from '@mui/material';
 import { getAllReliefRequests, addReliefSupplySimple, getUserDonationItems } from "../services/reliefService";
 import { useAuthStore } from "../store/authStore";
 import { RequestDetailDialog } from '../components/RequestDetailDialog';
@@ -16,6 +16,7 @@ export function Supply() {
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [acceptedDialogOpen, setAcceptedDialogOpen] = useState(false);
     const [tutorialOpen, setTutorialOpen] = useState(true);
+    const [activeTab, setActiveTab] = useState(0); // 0: 매칭결과, 1: 전체결과
     
     const { user } = useAuthStore();
 
@@ -182,14 +183,58 @@ export function Supply() {
         setSelectedRequest(null);
     };
 
-    // 사용자 희망 기부 물품과 매칭되는지 확인
-    const isMatchingRequest = (request) => {
-        if (!userDonations || userDonations.length === 0) return false;
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+    };
+
+    // 문자열 유사도 계산 (Jaccard 유사도 기반)
+    const calculateSimilarity = (str1, str2) => {
+        const normalize = (str) => str.toLowerCase().replace(/[^가-힣a-z0-9]/g, '');
+        const s1 = normalize(str1);
+        const s2 = normalize(str2);
         
-        return userDonations.some(donation => 
-            donation.item_name.toLowerCase().includes(request.item_name.toLowerCase()) ||
-            request.item_name.toLowerCase().includes(donation.item_name.toLowerCase())
-        );
+        // 완전 일치
+        if (s1 === s2) return 1;
+        
+        // 포함 관계 확인
+        if (s1.includes(s2) || s2.includes(s1)) return 0.8;
+        
+        // 2-gram 기반 유사도
+        const getBigrams = (str) => {
+            const bigrams = new Set();
+            for (let i = 0; i < str.length - 1; i++) {
+                bigrams.add(str.substring(i, i + 2));
+            }
+            return bigrams;
+        };
+        
+        const bigrams1 = getBigrams(s1);
+        const bigrams2 = getBigrams(s2);
+        
+        const intersection = new Set([...bigrams1].filter(x => bigrams2.has(x)));
+        const union = new Set([...bigrams1, ...bigrams2]);
+        
+        return union.size === 0 ? 0 : intersection.size / union.size;
+    };
+
+    // 사용자 희망 기부 물품과 매칭 정도 확인
+    const getMatchingLevel = (request) => {
+        if (!userDonations || userDonations.length === 0) return 'none';
+        
+        let maxSimilarity = 0;
+        userDonations.forEach(donation => {
+            const similarity = calculateSimilarity(donation.item_name, request.item_name);
+            maxSimilarity = Math.max(maxSimilarity, similarity);
+        });
+        
+        if (maxSimilarity >= 0.7) return 'exact';
+        if (maxSimilarity >= 0.4) return 'similar';
+        return 'none';
+    };
+
+    // 기존 함수 호환성 유지
+    const isMatchingRequest = (request) => {
+        return getMatchingLevel(request) !== 'none';
     };
 
     if (loading) {
@@ -295,55 +340,139 @@ export function Supply() {
         );
     }
 
+    // 요청 목록을 매칭 여부에 따라 분리
+    const matchedRequests = allRequests.filter(request => getMatchingLevel(request) !== 'none');
+    const otherRequests = allRequests.filter(request => getMatchingLevel(request) === 'none');
+
+    // 요청 아이템 렌더링 함수
+    const renderRequestItem = (request, index, totalLength) => (
+        <Box key={request.id}>
+            <Box 
+                sx={{ 
+                    cursor: 'pointer',
+                    pl: 2,
+                    pr: 2,
+                    pt: 1,
+                    pb: 1,
+                    '&:hover': {
+                        backgroundColor: 'action.hover'
+                    },
+                    transition: 'background-color 0.2s ease-in-out'
+                }}
+                onClick={() => handleRequestClick(request)}
+            >
+                <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                    {request.item_name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1}}>
+                    {(() => {
+                        const matchLevel = getMatchingLevel(request);
+                        switch (matchLevel) {
+                            case 'exact':
+                                return "내가 현재 가지고 있는 물품이에요";
+                            case 'similar':
+                                return "유사한 품목입니다";
+                            default:
+                                return "인근 대피소에서 필요로 하고 있어요";
+                        }
+                    })()} 
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                    {request.shelter?.shelter_name || '대피소 정보 없음'}
+                </Typography>
+                
+                {request.description && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {request.description}
+                    </Typography>
+                )}
+            </Box>
+            
+            {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
+            {index < totalLength - 1 && (
+                <Box sx={{ 
+                    height: '1px', 
+                    backgroundColor: 'divider'
+                }} />
+            )}
+        </Box>
+    );
+
     return (
         <Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                {allRequests.map((request, index) => (
-                    <Box key={request.id}>
-                        <Box 
-                            sx={{ 
-                                cursor: 'pointer',
-                                pl: 2,
-                                pr: 2,
-                                pt: 1,
-                                pb: 1,
-                                '&:hover': {
-                                    backgroundColor: 'action.hover'
-                                },
-                                transition: 'background-color 0.2s ease-in-out'
-                            }}
-                            onClick={() => handleRequestClick(request)}
-                        >
-                            <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                                {request.item_name}
+            {/* 탭 네비게이션 */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2,  }}>
+                <Tabs value={activeTab} onChange={handleTabChange} aria-label="구호품 요청 탭">
+                    <Tab 
+                        label={`🎯 매칭결과 (${matchedRequests.length})`} 
+                        sx={{ fontWeight: 'bold', minWidth:'50%' }}
+                    />
+                    <Tab 
+                        label={`📋 전체 결과 (${allRequests.length})`} 
+                        sx={{ fontWeight: 'bold', minWidth:'50%' }}
+                    />
+                </Tabs>
+            </Box>
+
+            {/* 탭 컨텐츠 */}
+            {activeTab === 0 && (
+                <Box>
+                    {matchedRequests.length === 0 ? (
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center', 
+                            minHeight: '300px',
+                            flexDirection: 'column',
+                            gap: 2
+                        }}>
+                            <Typography variant="h6" color="text.secondary">
+                                매칭된 구호품 요청이 없습니다
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1}}>
-                                {isMatchingRequest(request) 
-                                    ? "내가 현재 가지고 있는 물품이에요" 
-                                    : "가장 가까운 곳에 위치한 대피소에서 필요로 하고 있어요"
-                                }
+                            <Typography variant="body2" color="text.secondary">
+                                먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {request.shelter?.shelter_name || '대피소 정보 없음'}
-                            </Typography>
-                            
-                            {request.description && (
-                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                    {request.description}
-                                </Typography>
+                        </Box>
+                    ) : (
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            {matchedRequests.map((request, index) => 
+                                renderRequestItem(request, index, matchedRequests.length)
                             )}
                         </Box>
-                        
-                        {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
-                        {index < allRequests.length - 1 && (
-                            <Box sx={{ 
-                                height: '1px', 
-                                backgroundColor: 'divider'
-                            }} />
-                        )}
-                    </Box>
-                ))}
-            </Box>
+                    )}
+                </Box>
+            )}
+
+            {activeTab === 1 && (
+                <Box>
+                    {allRequests.length === 0 ? (
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center', 
+                            minHeight: '300px',
+                            flexDirection: 'column',
+                            gap: 2
+                        }}>
+                            <Typography variant="h6" color="text.secondary">
+                                현재 구호품 요청이 없습니다
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                등록된 구호품 요청이 없습니다
+                            </Typography>
+                            <Button variant="outlined" onClick={loadAllRequests}>
+                                새로고침
+                            </Button>
+                        </Box>
+                    ) : (
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            {allRequests.map((request, index) => 
+                                renderRequestItem(request, index, allRequests.length)
+                            )}
+                        </Box>
+                    )}
+                </Box>
+            )}
 
             {/* 구호품 요청 상세정보 다이얼로그 */}
             <RequestDetailDialog
