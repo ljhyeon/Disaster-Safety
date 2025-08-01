@@ -208,30 +208,37 @@ const Home = () => {
                         position={[shelter.latitude, shelter.longitude]} 
                         icon={customIcon}
                     >
-                        <Popup>
-                        <div style={{ textAlign: 'center' }}>
-                                <strong>{shelter.shelter_name}</strong><br />
-                                <div style={{ margin: '8px 0', fontSize: '12px', color: '#666' }}>
-                                    재난유형: {shelter.disaster_type}<br />
-                                    수용률: {shelter.occupancy_rate}% ({shelter.current_occupancy}/{shelter.capacity}명)<br />
+                        <Popup maxWidth={350} minWidth={280}>
+                        <div style={{ textAlign: 'center', padding: '8px' }}>
+                                <strong style={{ fontSize: '18px', color: '#333' }}>{shelter.shelter_name}</strong><br />
+                                <div style={{ margin: '12px 0', fontSize: '15px', color: '#555', lineHeight: '1.6' }}>
+                                    재난유형: <span style={{ fontWeight: '600' }}>{shelter.disaster_type}</span><br />
+                                    수용률: <span style={{ fontWeight: '600' }}>{shelter.occupancy_rate}%</span> ({shelter.current_occupancy}/{shelter.capacity}명)<br />
                                     상태: <span style={{ 
                                         color: shelter.status === '운영중' ? '#52c41a' : 
-                                              shelter.status === '포화' ? '#ff4d4f' : '#faad14'
+                                              shelter.status === '포화' ? '#ff4d4f' : '#faad14',
+                                        fontWeight: '600',
+                                        fontSize: '16px'
                                     }}>
                                         {shelter.status}
                                     </span>
                                 </div>
                             <button
                                 style={{
-                                    marginTop: '0.5rem',
-                                    padding: '4px 8px',
+                                    marginTop: '8px',
+                                    padding: '8px 16px',
                                     backgroundColor: '#1677ff',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '4px',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    transition: 'background-color 0.3s ease'
                                 }}
                                     onClick={() => handleSelectId(shelter.shelter_id, shelter.shelter_name)}
+                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#0958d9'}
+                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#1677ff'}
                             >
                                 상세보기 →
                             </button>
