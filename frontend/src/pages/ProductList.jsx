@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, Typography, Spin, message } from 'antd';
+import { Button, Typography, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react'
 
@@ -9,6 +9,8 @@ import { RequestCardList } from '../components/RequestCardList'
 const { Title, } = Typography
 
 import { getReliefRequestsWithSupplyStatus } from '../services/reliefService';
+
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 const ProductList = () => {
     const navigate = useNavigate()
@@ -85,17 +87,7 @@ const ProductList = () => {
     // 로딩 중일 때 표시
     if (isLoading) {
         return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '50vh',
-                flexDirection: 'column',
-                gap: '16px'
-            }}>
-                <Spin size="large" />
-                <div>구호품 요청 목록을 불러오는 중...</div>
-            </div>
+            <LoadingSpinner text="구호품 요청 목록을 불러오는 중..." />
         )
     }
     

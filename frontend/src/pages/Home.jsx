@@ -6,8 +6,10 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import { Layout, Spin, message, Button, Space, Avatar, Divider } from 'antd'
+import { Layout, message, Button, Space, Avatar, Divider } from 'antd';
 import { PlusOutlined, UserOutlined, EnvironmentOutlined } from '@ant-design/icons'
+
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 import { getAllShelters } from '../services/shelterService'
 
@@ -57,17 +59,7 @@ const Home = () => {
     if (isLoading) {
         return (
             <Layout style={{ minHeight: '100vh', width: '100vw', backgroundColor: "white" }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    height: '100vh',
-                    flexDirection: 'column',
-                    gap: '16px'
-                }}>
-                    <Spin size="large" />
-                    <div>대피소 정보를 불러오는 중...</div>
-                </div>
+                <LoadingSpinner text="대피소 정보를 불러오는 중..." />
             </Layout>
         )
     }

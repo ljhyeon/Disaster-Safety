@@ -4,6 +4,8 @@ import { useShelterStore } from '../store/useShelterStore'
 import { useAuthStore } from '../store/authStore'
 import { useEffect, useState } from 'react'
 
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+
 const { Title, } = Typography
 const { Option } = Select
 
@@ -138,17 +140,7 @@ const EditSetting = () => {
     // 로딩 중일 때 표시
     if (isLoading) {
         return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '50vh',
-                flexDirection: 'column',
-                gap: '16px'
-            }}>
-                <Spin size="large" />
-                <div>대피소 정보를 불러오는 중...</div>
-            </div>
+            <LoadingSpinner text="대피소 정보를 불러오는 중...<" />
         )
     }
 

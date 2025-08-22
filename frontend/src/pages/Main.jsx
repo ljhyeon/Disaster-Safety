@@ -1,4 +1,4 @@
-import { Typography, Row, Col, Spin, message, Card } from 'antd'
+import { Typography, Row, Col, message, Card } from 'antd';
 import { useEffect, useState } from 'react'
 import { useShelterStore } from '../store/useShelterStore'
 
@@ -11,6 +11,8 @@ import { NotificationList } from '../components/NotificationList'
 import { getShelter } from '../services/shelterService'
 import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShelter } from '../services/reliefService'
 import { getUser } from '../services/userService'
+
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 const Main = () => {
     const selectedId = useShelterStore((s)=>s.selectedId)
@@ -181,17 +183,7 @@ const Main = () => {
     // 로딩 중일 때 표시
     if (isLoading) {
         return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '50vh',
-                flexDirection: 'column',
-                gap: '16px'
-            }}>
-                <Spin size="large" />
-                <div>통계 정보를 불러오는 중...</div>
-            </div>
+            <LoadingSpinner text="통계 정보를 불러오는 중..." />
         )
     }
 
