@@ -1,6 +1,4 @@
-import { useMemo } from 'react';
-
-import { Typography, Row, Col, Card } from 'antd';
+import { Typography, Row, Col, } from 'antd';
 import { useShelterStore } from '../store/useShelterStore'
 
 const { Title, } = Typography;
@@ -8,133 +6,24 @@ const { Title, } = Typography;
 import { COLORS } from '../styles/colors';
 import DonutChart from '../components/DonutChart';
 
-import { getShelter } from '../services/shelterService';
-import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShelter } from '../services/reliefService';
-
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import NotificationList from '../components/notification/NotificationList';
 import ShelterInfoCard from '../components/shelter/ShelterInfoCard';
 import ReliefInfoCard from '../components/shelter/ReliefInfoCard';
 
-import { useAsync } from '../hooks/useAsync';
-
-import { v4 as uuidv4 } from 'uuid';
+import { useShelter } from '../hooks/shelter/useShelter';
+import { useReliefStatistics } from '../hooks/relief/useReliefStatistics';
+import { useNotifications } from '../hooks/relief/useNotifications';
 
 const Main = () => {
     const selectedId = useShelterStore((s)=>s.selectedId);
 
-    const { data: shelterData, loading: shelterLoading } = useAsync(
-        () => selectedId ? getShelter(selectedId) : Promise.resolve({ success: false }),
-        [selectedId],
-        {
-            errorMessage: '대피소 정보를 불러올 수 없습니다.',
-            onError: (error) => console.error('대피소 조회 실패:', error)
-        }
-    );
-
-    const { data: statisticsData, loading: statisticsLoading } = useAsync(
-        () => selectedId ? getReliefStatistics(selectedId, 7) : Promise.resolve({ success: false }),
-        [selectedId],
-        {
-            immediate: !!selectedId,
-            onError: (error) => {
-                console.error('통계 조회 실패:', error)
-                // 통계 실패 시에는 에러 메시지 표시하지 않음 (기본값 사용)
-            }
-        }
-    );
-
-    const { data: requestsData } = useAsync(
-        () => selectedId ? getReliefRequestsByShelter(selectedId) : Promise.resolve({ success: false }),
-        [selectedId],
-        {
-            immediate: !!selectedId,
-            onError: (error) => console.error('요청 조회 실패:', error)
-        }
-    );
-
-    const { data: suppliesData } = useAsync(
-        () => selectedId ? getReliefSuppliesByShelter(selectedId) : Promise.resolve({ success: false }),
-        [selectedId],
-        {
-            immediate: !!selectedId,
-            onError: (error) => console.error('구호품 공급 로그 조회 실패:', error)
-        }
-    );
-
-    // 데이터 추출 및 기본값 설정
-    const shelter = shelterData?.shelter || null
-    const statistics = statisticsData?.statistics || {
-        relief_items: [],
-        total_requests: 0,
-        total_supplies: 0,
-        pending_requests: 0
-    }
-    // const recentRequests = requestsData?.requests?.slice(0, 5) || []
-    // const supplyLogs = suppliesData?.supplies?.slice(0, 10) || []
-
-    const notifications = useMemo(() => {
-        const allNotifications = []
-
-        // 구호품 요청 알림 추가
-        if (requestsData?.success && requestsData.requests) {
-            requestsData.requests.forEach(request => {
-                const requesterName = request.requester_name || '관리자'
-                const itemsText = request.relief_items?.map(item => 
-                    `${item.item || item.item_name} ${item.quantity}${item.unit || '개'}`
-                ).join(', ') || '구호품'
-
-                allNotifications.push({
-                    id: `request_${request.request_id || crypto.randomUUID() || uuidv4()}`, // fallback ID
-                    type: 'request',
-                    message: `${requesterName}님이 필요 구호품으로 ${itemsText} 등록하셨습니다.`,
-                    timestamp: request.created_at,
-                    data: request
-                })
-            })
-        }
-
-        // 구호품 공급 알림 추가
-        if (suppliesData?.success && suppliesData.supplies) {
-            suppliesData.supplies.forEach(supply => {
-                let supplierName = supply.supplier_name || '익명'
-                
-                // 사용자 정보가 있으면 사용 (추후 별도 훅으로 분리 가능)
-                if (supply.supplier_user_info) {
-                    supplierName = supply.supplier_user_info.display_name || 
-                                 supply.supplier_user_info.email || '익명'
-                }
-
-                const suffix = supply.item_name && 
-                                ['ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
-                                .includes(supply.item_name[supply.item_name.length - 1])
-                                ? '를' : '을'
-
-                allNotifications.push({
-                    id: `supply_${supply.id || supply.supply_id || crypto.randomUUID() || uuidv4()}`, // fallback ID
-                    type: 'supply',
-                    message: `${supplierName}님이 필요 구호품 중 ${supply.item_name || '구호품'}${suffix} ${supply.supplied_quantity || 0}${supply.unit || '개'} 배송하였습니다.`,
-                    timestamp: supply.created_at,
-                    data: supply
-                })
-            })
-        }
-
-        // 시간순 정렬 (최신순) 및 최대 15개
-        return allNotifications
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 15)
-    }, [requestsData, suppliesData]);
-
-    // 구호품 공급률 계산
-    const reliefSupplyRate = useMemo(() => {
-        return statistics?.total_requests > 0 
-            ? Math.round(((statistics?.total_supplies || 0) / statistics.total_requests) * 100)
-            : 0
-    }, [statistics]);
-
+    const { shelter, isLoading: shelterLoading } = useShelter(selectedId);
+    const { statistics, reliefSupplyRate, isLoading: statsLoading } = useReliefStatistics(selectedId);
+    const { notifications } = useNotifications(selectedId);
+    
     // 로딩 상태 확인 (필수 데이터만)
-    const isLoading = shelterLoading || statisticsLoading;
+    const isLoading = shelterLoading || statsLoading;
 
     // 선택된 대피소가 없을 때
     if (!selectedId) {
