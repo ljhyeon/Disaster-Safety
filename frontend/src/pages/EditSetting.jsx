@@ -4,10 +4,9 @@ import { Button, Typography, Form, Input, message, Space, Select, Row, Col } fro
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { COLORS } from '../styles/colors';
 import { useShelterStore } from '../store/useShelterStore'
-import { useAuthStore } from '../store/authStore'
-import { getShelter, updateShelter, createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
+import { updateShelter, createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
+import useShelterForm from '../hooks/shelter/useShelterForm';
 import { BOOLEAN_OPTIONS } from '../constants/shelterOptions'
-import { useAsync } from '../hooks/useAsync';
 
 const { Title, } = Typography
 const { Option } = Select
@@ -23,56 +22,9 @@ const EditSetting = () => {
     const [form] = Form.useForm()
     const navigate = useNavigate()
     const selectedId = useShelterStore((s)=>s.selectedId)
-    const { user } = useAuthStore()
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    
-    const { data: shelter, loading: isLoading, } = useAsync(
-        async () => {
-            // 새 대피소 생성 모드
-            if (!selectedId || selectedId === 'new') {
-                return { isNew: true, shelter: null };
-            }
-
-            const result = await getShelter(selectedId);
-
-            if (!result.success) {
-                message.error('대피소 정보를 불러올 수 없습니다.');
-                navigate('/home');
-                return { isNew: false, shelter: null };
-            }
-
-            return { isNew: false, shelter: result.shelter };
-        },
-        [selectedId],
-        {
-            onSuccess: ({ isNew, shelter }) => {
-                if (isNew) return;
-
-                form.setFieldsValue({
-                    shelterName: shelter.shelter_name,
-                    location: shelter.location,
-                    disasterType: shelter.disaster_type,
-                    capacity: shelter.capacity,
-                    currentOccupancy: shelter.current_occupancy,
-                    hasDisabledFacility: shelter.has_disabled_facility,
-                    hasPetZone: shelter.has_pet_zone,
-                    status: shelter.status,
-                    contactPerson: shelter.contact_person,
-                    contactPhone: shelter.contact_phone,
-                    latitude: shelter.latitude,
-                    longitude: shelter.longitude,
-                });
-            },
-            onError: (error) => {
-                message.error('대피소 정보를 불러오는 중 오류가 발생했습니다.');
-                console.error('대피소 조회 오류:', error);
-                navigate('/home');
-            },
-        }
-    );
-
-    const isNewShelter = shelter?.isNew || false;
+    const { isNewShelter, isLoading, user } = useShelterForm(selectedId, form);
 
     const handleSubmit = async (values) => {
         setIsSubmitting(true)
