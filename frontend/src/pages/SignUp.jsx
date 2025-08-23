@@ -1,68 +1,67 @@
-import { Layout, Input, Button, Form, Space, message, Upload, Checkbox } from 'antd'
-import { useNavigate } from 'react-router-dom'
-import { COLORS } from '../styles/colors'
-
-import { Logo } from '../components/login/Logo'
-import { signUp } from '../services/authService'
-import { USER_TYPES } from '../services/userService'
-import { useState } from 'react'
-
-const { Content } = Layout
+import { useNavigate } from 'react-router-dom';
+import { Layout, Input, Button, Form, Space, message, Upload, Checkbox } from 'antd';
+import { COLORS } from '../styles/colors';
+import { Logo } from '../components/login/Logo';
+// import { signUp } from '../services/authService'
+// import { USER_TYPES } from '../services/userService'
+import { useLoading } from '../hooks/useLoading';
+const { Content } = Layout;
 
 const SignUp = () => {
-    const navigate = useNavigate()
-    const [isLoading, setIsLoading] = useState(false)
+    const navigate = useNavigate();
+    const { isLoading, withLoading } = useLoading();
 
     const onSignUp = async (values) => {
-        const { email, password, displayName, termsAgreed, file } = values
+        const { email, password, displayName, termsAgreed, file } = values;
         
         // 이용약관 동의 확인
         if (!termsAgreed) {
-            message.error('이용약관에 동의해주세요.')
-            return
+            message.error('이용약관에 동의해주세요.');
+            return;
         }
         
         // 관리자 승인 안내 팝업 표시
-        alert('관리자 승인 후 회원가입 처리됩니다.')
-        navigate('/login')
+        alert('관리자 승인 후 회원가입 처리됩니다.');
+        navigate('/login');
         
         // 기존 회원가입 코드 (주석 처리)
         /*
         // 공무원 인증서 파일 확인 (현재는 업로드된 파일명만 저장)
-        let certFile = null
-        if (file && file.length > 0) {
-            certFile = file[0].name // 추후 Storage URL로 변경 예정
-        }
-        
-        setIsLoading(true)
-        
-        try {
-            // 공무원으로 회원가입
-            const result = await signUp(
-                email, 
-                password, 
-                displayName, 
-                USER_TYPES.PUBLIC_OFFICER, 
-                termsAgreed,
-                certFile
-            )
-            
-            if (result.success) {
-                console.log('회원가입 성공:', result.user)
-                console.log('Firestore 저장 결과:', result.firestoreResult)
-                message.success('회원가입이 완료되었습니다!')
-            navigate('/login')
-            } else {
-                message.error(result.error.message)
+         await withLoading(async () => {
+            // 공무원 인증서 파일 확인 (현재는 업로드된 파일명만 저장)
+            let certFile = null
+            if (file && file.length > 0) {
+                certFile = file[0].name // 추후 Storage URL로 변경 예정
             }
-        } catch (error) {
-            console.error('회원가입 실패:', error)
-            message.error('회원가입 중 오류가 발생했습니다.')
-        } finally {
-            setIsLoading(false)
-        }
+            
+            try {
+                // 공무원으로 회원가입
+                const result = await signUp(
+                    email, 
+                    password, 
+                    displayName, 
+                    USER_TYPES.PUBLIC_OFFICER, 
+                    termsAgreed,
+                    certFile
+                )
+                
+                if (result.success) {
+                    console.log('회원가입 성공:', result.user)
+                    console.log('Firestore 저장 결과:', result.firestoreResult)
+                    message.success('회원가입이 완료되었습니다!')
+                    navigate('/login')
+                } else {
+                    message.error(result.error.message)
+                }
+            } catch (error) {
+                console.error('회원가입 실패:', error)
+                message.error('회원가입 중 오류가 발생했습니다.')
+                throw error
+            }
+        })
         */
     }
+
     return (
         <Layout style={{ minHeight: '100vh', width: '100vw', backgroundColor: "white" }}>
             <Content

@@ -36,7 +36,7 @@ const ShelterRegister = () => {
     const operationStatusOptions = Object.values(SHELTER_STATUS).map(status => ({
         label: status,
         value: status
-    }))
+    }));
 
     const handleSubmit = async (values) => {
         await withSubmitLoading(async () => {
@@ -54,96 +54,93 @@ const ShelterRegister = () => {
                 managerId: user?.uid,
                 latitude: values.latitude,
                 longitude: values.longitude
-            }
+            };
 
-            const result = await createShelter(shelterData)
+            const result = await createShelter(shelterData);
 
             if (result.success) {
-                message.success(`대피소가 성공적으로 등록되었습니다! (ID: ${result.shelter_id})`)
-                form.resetFields()
+                message.success(`대피소가 성공적으로 등록되었습니다! (ID: ${result.shelter_id})`);
+                form.resetFields();
                 setTimeout(() => {
-                    navigate('/home')
-                }, 2000)
+                    navigate('/home');
+                }, 2000);
             } else {
-                throw new Error(result.error.message)
+                throw new Error(result.error.message);
             }
-        }).catch(error => {
-            message.error(error.message || '대피소 등록 중 오류가 발생했습니다.')
-            console.error('대피소 등록 오류:', error)
-        })
+        });
     }
 
     const handleCancel = () => {
-        navigate('/home')
-    }
+        navigate('/home');
+    };
 
     const handleReset = () => {
-        form.resetFields()
-        message.info('폼이 초기화되었습니다.')
-    }
+        form.resetFields();
+        message.info('폼이 초기화되었습니다.');
+    };
 
     // CSV 파일 처리
     const handleCSVUpload = (file) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = (e) => {
-            const text = e.target.result
-            const lines = text.split('\n').filter(line => line.trim())
+            const text = e.target.result;
+            const lines = text.split('\n').filter(line => line.trim());
             
             if (lines.length < 2) {
-                message.error('CSV 파일에 데이터가 충분하지 않습니다.')
-                return
+                message.error('CSV 파일에 데이터가 충분하지 않습니다.');
+                return;
             }
             
-            const headers = lines[0].split('|').map(h => h.trim().replace(/"/g, ''))
+            const headers = lines[0].split('|').map(h => h.trim().replace(/"/g, ''));
             const rows = lines.slice(1).map(line => {
-                const values = line.split('|').map(v => v.trim().replace(/"/g, ''))
-                const row = {}
+                const values = line.split('|').map(v => v.trim().replace(/"/g, ''));
+                const row = {};
                 headers.forEach((header, index) => {
-                    row[header] = values[index] || ''
+                    row[header] = values[index] || '';
                 })
-                return row
+                return row;
             })
             
-            setCsvColumns(headers)
-            setCsvData(rows)
-            setShowMappingModal(true)
+            setCsvColumns(headers);
+            setCsvData(rows);
+            setShowMappingModal(true);
         }
-        reader.readAsText(file, 'utf-8')
-        return false // prevent default upload
+        reader.readAsText(file, 'utf-8');
+        return false; // prevent default upload
     }
 
     // 컬럼 매핑 처리
     const handleMappingConfirm = async () => {
-        const mappedFields = Object.values(columnMapping).filter(Boolean)
+        const mappedFields = Object.values(columnMapping).filter(Boolean);
         if (mappedFields.length === 0) {
-            message.error('최소 하나의 필드는 매핑해야 합니다.')
-            return
+            message.error('최소 하나의 필드는 매핑해야 합니다.');
+            return;
         }
 
         await withBulkLoading(async () => {
-            let successCount = 0
-            let errorCount = 0
+            let successCount = 0;
+            let errorCount = 0;
 
             for (const row of csvData) {
                 const shelterData = {
                     managerId: user?.uid
-                }
+                };
 
                 // 매핑된 필드들 처리
                 Object.entries(columnMapping).forEach(([csvColumn, firebaseField]) => {
                     if (firebaseField && row[csvColumn]) {
-                        let value = row[csvColumn]
+                        let value = row[csvColumn];
                         
                         // 데이터 타입 변환
                         if (firebaseField === 'latitude' || firebaseField === 'longitude') {
-                            value = parseFloat(value)
+                            value = parseFloat(value);
                         } else if (firebaseField === 'capacity' || firebaseField === 'currentOccupancy') {
-                            value = parseInt(value)
+                            value = parseInt(value);
                         } else if (firebaseField === 'hasDisabledFacility' || firebaseField === 'hasPetZone') {
-                            value = value === '여' || value === 'true' || value === '1' || value === 'Y'
+                            value = value === '여' || value === 'true' || value === '1' || value === 'Y';
                         }
                         
-                        shelterData[firebaseField] = value
+                        shelterData[firebaseField] = value;
                     }
                 })
 
@@ -176,9 +173,6 @@ const ShelterRegister = () => {
                 setColumnMapping({})
                 setShowMappingModal(false)
             }
-        }).catch(error => {
-            message.error('벌크 업로드 중 오류가 발생했습니다.')
-            console.error('벌크 업로드 오류:', error)
         })
     }
 
