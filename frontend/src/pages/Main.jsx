@@ -3,10 +3,8 @@ import { useShelterStore } from '../store/useShelterStore'
 
 const { Title, } = Typography;
 
-import { COLORS } from '../styles/colors';
-import DonutChart from '../components/DonutChart';
-
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ShelterStatsGrid } from '../components/shelter/ShelterStatsGrid';
 import NotificationList from '../components/notification/NotificationList';
 import ShelterInfoCard from '../components/shelter/ShelterInfoCard';
 import ReliefInfoCard from '../components/shelter/ReliefInfoCard';
@@ -57,31 +55,11 @@ const Main = () => {
             </Title>
             
             {/* 기본 통계 */}
-            <Row gutter={[16, 16]} justify="center">
-                <Col xs={24} sm={12} md={8}>
-                    <DonutChart 
-                        title="수용 인원률" 
-                        value={shelter.occupancy_rate} 
-                        color={COLORS.primaryLight} 
-                    />
-                </Col>
-                <Col xs={24} sm={12} md={8}>
-                    <DonutChart 
-                        title="구호품 공급률" 
-                        value={reliefSupplyRate} 
-                        color={COLORS.primaryHover} 
-                    />
-                </Col>
-                <Col xs={24} sm={12} md={8}>
-                    <DonutChart 
-                        title="대기 요청률" 
-                        value={statistics?.total_requests > 0 
-                            ? Math.round(((statistics?.pending_requests || 0) / statistics.total_requests) * 100)
-                            : 0} 
-                        color={COLORS.primary} 
-                    />
-                </Col>
-            </Row>
+            <ShelterStatsGrid 
+                shelter={shelter} 
+                statistics={statistics} 
+                reliefSupplyRate={reliefSupplyRate}
+            />
 
             {/* 상세 정보 카드 */}
             <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
