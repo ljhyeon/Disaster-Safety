@@ -4,6 +4,7 @@ import { Button, Typography, Descriptions, Divider, message } from 'antd';
 const { Title, } = Typography;
 
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ShelterInfo } from '../components/shelter/ShelterInfo';
 
 import { useShelterStore } from '../store/useShelterStore';
 
@@ -60,41 +61,7 @@ const Setting = () => {
                 <Button onClick={()=>{navigate(`/editsetting/${selectedId}`)}}>정보 수정</Button>
             </div>
 
-            <Descriptions column={3} layout="horizontal" bordered={false}>
-                <Descriptions.Item label="대피소명" span={3}>
-                    {shelter.shelter_name}
-                </Descriptions.Item>
-
-                <Descriptions.Item label="대피소 ID">{shelter.shelter_id}</Descriptions.Item>
-                <Descriptions.Item label="담당자 성명">{shelter.contact_person}</Descriptions.Item>
-                <Descriptions.Item label="발생 재난 유형">{shelter.disaster_type}</Descriptions.Item>
-
-                <Descriptions.Item label="대피소 주소" span={2}>{shelter.location}</Descriptions.Item>
-                <Descriptions.Item label="담당자 연락처">{shelter.contact_phone}</Descriptions.Item>
-
-                <Descriptions.Item label="위도">{shelter.latitude}</Descriptions.Item>
-                <Descriptions.Item label="경도">{shelter.longitude}</Descriptions.Item>
-                <Descriptions.Item label="운영 상태">
-                    <span style={{ 
-                        color: shelter.status === '운영중' ? '#52c41a' : 
-                              shelter.status === '포화' ? '#ff4d4f' : '#faad14'
-                    }}>
-                        {shelter.status}
-                    </span>
-                </Descriptions.Item>
-            </Descriptions>
-
-            <Divider />
-
-            <Descriptions column={3} layout="horizontal" bordered={false}>
-                <Descriptions.Item label="수용 가능 인원수">{shelter.capacity}명</Descriptions.Item>
-                <Descriptions.Item label="장애인 편의시설 여부">{shelter.has_disabled_facility ? '여' : '부'}</Descriptions.Item>
-                <Descriptions.Item label="수용률">{shelter.occupancy_rate}%</Descriptions.Item>
-
-                <Descriptions.Item label="현재 대피 인원 수">{shelter.current_occupancy}명</Descriptions.Item>
-                <Descriptions.Item label="반려동물 수용 가능 여부">{shelter.has_pet_zone ? '여' : '부'}</Descriptions.Item>
-                <Descriptions.Item label="등록일">{new Date(shelter.created_at).toLocaleDateString()}</Descriptions.Item>
-            </Descriptions>
+            <ShelterInfo shelter={shelter} />
         </>
     )
 }
