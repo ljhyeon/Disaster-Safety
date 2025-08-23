@@ -1,21 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import { Button, Typography, Form, Input, message, Space, Select, Row, Col, Card, Upload, Table, Modal, Divider } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-
 import { COLORS } from '../styles/colors';
-const { Title } = Typography;
-const { Option } = Select;
-
 import { useAuthStore } from '../store/authStore'
-
 import { createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
-
 import { useLoading } from '../hooks/useLoading';
-
 import { FIREBASE_SHELTER_FIELDS } from '../constants/firebaseFields';
 import { BOOLEAN_OPTIONS } from '../constants/shelterOptions';
+
+const { Title } = Typography;
+const { Option } = Select;
 
 const ShelterRegister = () => {
     const [form] = Form.useForm();
