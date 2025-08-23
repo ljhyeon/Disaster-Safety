@@ -1,18 +1,15 @@
 import { useNavigate } from 'react-router-dom'
-import { useShelterStore } from '../store/useShelterStore'
+import { Layout, Button, Space, Avatar, Divider } from 'antd';
+import { PlusOutlined, UserOutlined, EnvironmentOutlined } from '@ant-design/icons'
+
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import { Layout, message, Button, Space, Avatar, Divider } from 'antd';
-import { PlusOutlined, UserOutlined, EnvironmentOutlined } from '@ant-design/icons'
-
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
-
-import { getAllShelters } from '../services/shelterService'
-
-import { useAsync } from '../hooks/useAsync';
+import { useShelters } from '../hooks/shelter/useShelters';
+import { useShelterStore } from '../store/useShelterStore';
 
 const customIcon = new L.Icon({
     iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
@@ -22,25 +19,11 @@ const customIcon = new L.Icon({
 })
 
 const Home = () => {
-    const navigate = useNavigate()
-    const setSelectedId = useShelterStore((s)=>s.setSelectedId)
-    const setName = useShelterStore((s)=>s.setName)
+    const navigate = useNavigate();
+    const setSelectedId = useShelterStore((s)=>s.setSelectedId);
+    const setName = useShelterStore((s)=>s.setName);
 
-    const { data: sheltersData, loading: isLoading } = useAsync(
-        getAllShelters,
-        [],
-        {
-            errorMessage: '대피소 정보를 불러올 수 없습니다.',
-            onSuccess: (result) => {
-                if (!result.success) {
-                    message.error('대피소 정보를 불러올 수 없습니다.')
-                    console.error('대피소 조회 실패:', result.error)
-                }
-            }
-        }
-    );
-
-    const shelters = sheltersData?.shelters || []
+    const { shelters, isLoading, } = useShelters();
 
     const handleSelectId = (shelterId, name) => {
         setSelectedId(shelterId)
