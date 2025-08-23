@@ -12,13 +12,9 @@ const { Option } = Select
 import { COLORS } from '../styles/colors';
 
 import { getShelter, updateShelter, createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
+import { BOOLEAN_OPTIONS } from '../constants/shelterOptions'
 
 const disasterTypes = Object.values(DISASTER_TYPES);
-
-const booleanOptions = [
-    { label: '여', value: true },
-    { label: '부', value: false }
-];
 
 const operationStatusOptions = Object.values(SHELTER_STATUS).map(status => ({
     label: status,
@@ -284,7 +280,7 @@ const EditSetting = () => {
                             name="hasDisabledFacility"
                             rules={[{ required: true, message: "장애인 편의시설 여부를 선택해주세요" }]}
                         >
-                            <Select placeholder="선택" options={booleanOptions} />
+                            <Select placeholder="선택" options={BOOLEAN_OPTIONS} />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -293,7 +289,7 @@ const EditSetting = () => {
                             name="hasPetZone"
                             rules={[{ required: true, message: "반려동물 수용 가능 여부를 선택해주세요" }]}
                         >
-                            <Select placeholder="선택" options={booleanOptions} />
+                            <Select placeholder="선택" options={BOOLEAN_OPTIONS} />
                         </Form.Item>
                     </Col>
                 </Row>
