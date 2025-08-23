@@ -14,7 +14,7 @@ import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShe
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 import { useAsync } from '../hooks/useAsync';
-import { getTimeAgo } from '../utils/getTimeAge';
+import { getTimeAgo } from '../utils/getTimeAgo';
 
 const Main = () => {
     const selectedId = useShelterStore((s)=>s.selectedId);
