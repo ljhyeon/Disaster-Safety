@@ -10,7 +10,6 @@ import { useShelterStore } from '../store/useShelterStore'
 import { useAuthStore } from '../store/authStore'
 
 import { createReliefRequest, RELIEF_CATEGORIES, RELIEF_SUBCATEGORIES } from '../services/reliefService'
-import { recommendData } from '../dummydata/recommendData'
 
 const AddProduct = () => {
     const [form] = Form.useForm()
