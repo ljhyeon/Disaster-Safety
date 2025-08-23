@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useShelterStore } from '../store/useShelterStore'
-import { useEffect, useState } from 'react'
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
@@ -13,6 +12,8 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 import { getAllShelters } from '../services/shelterService'
 
+import { useAsync } from '../hooks/useAsync';
+
 const customIcon = new L.Icon({
     iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
     iconSize: [36, 36],
@@ -24,30 +25,22 @@ const Home = () => {
     const navigate = useNavigate()
     const setSelectedId = useShelterStore((s)=>s.setSelectedId)
     const setName = useShelterStore((s)=>s.setName)
-    const [shelters, setShelters] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
 
-    // Firestore에서 대피소 데이터 가져오기
-    useEffect(() => {
-        const fetchShelters = async () => {
-            try {
-                const result = await getAllShelters()
-                if (result.success) {
-                    setShelters(result.shelters)
-                } else {
+    const { data: sheltersData, loading: isLoading } = useAsync(
+        getAllShelters,
+        [],
+        {
+            errorMessage: '대피소 정보를 불러올 수 없습니다.',
+            onSuccess: (result) => {
+                if (!result.success) {
                     message.error('대피소 정보를 불러올 수 없습니다.')
                     console.error('대피소 조회 실패:', result.error)
                 }
-            } catch (error) {
-                message.error('대피소 정보를 불러오는 중 오류가 발생했습니다.')
-                console.error('대피소 조회 오류:', error)
-            } finally {
-                setIsLoading(false)
             }
         }
+    );
 
-        fetchShelters()
-    }, [])
+    const shelters = sheltersData?.shelters || []
 
     const handleSelectId = (shelterId, name) => {
         setSelectedId(shelterId)

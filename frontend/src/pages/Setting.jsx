@@ -1,48 +1,39 @@
-import { Button, Typography, Descriptions, Divider, Spin, message } from 'antd';
-import { useNavigate } from 'react-router-dom'
-import { useShelterStore } from '../store/useShelterStore'
-import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 
-const { Title, } = Typography
+import { Button, Typography, Descriptions, Divider, message } from 'antd';
+const { Title, } = Typography;
+
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+
+import { useShelterStore } from '../store/useShelterStore';
 
 import { getShelter } from '../services/shelterService';
 
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { useAsync } from '../hooks/useAsync';
 
 const Setting = () => {
     const navigate = useNavigate()
     const selectedId = useShelterStore((s)=>s.selectedId)
-    const [shelter, setShelter] = useState(null)
-    const [isLoading, setIsLoading] = useState(true)
 
-    // 대피소 정보 로드
-    useEffect(() => {
-        const loadShelterData = async () => {
+    const { data: shelterData, loading: isLoading, } = useAsync(
+        () => {
             if (!selectedId) {
-                message.error('대피소가 선택되지 않았습니다.')
-                navigate('/home')
-                return
+                message.error('대피소가 선택되지 않았습니다.');
+                navigate('/home');
+                return Promise.resolve(null);
             }
-
-            try {
-                const result = await getShelter(selectedId)
-                if (result.success) {
-                    setShelter(result.shelter)
-                } else {
-                    message.error('대피소 정보를 불러올 수 없습니다.')
-                    navigate('/home')
-                }
-            } catch (error) {
-                message.error('대피소 정보를 불러오는 중 오류가 발생했습니다.')
-                console.error('대피소 조회 오류:', error)
-                navigate('/home')
-            } finally {
-                setIsLoading(false)
+            return getShelter(selectedId);
+        },
+        [selectedId, navigate],
+        {
+            errorMessage: '대피소 정보를 불러올 수 없습니다.',
+            onError: () => {
+                navigate('/home');
             }
         }
+    );
 
-        loadShelterData()
-    }, [selectedId, navigate])
+    const shelter = shelterData?.shelter || null;
 
     // 로딩 중일 때 표시
     if (isLoading) {
@@ -51,7 +42,7 @@ const Setting = () => {
         )
     }
 
-    if (!shelter) {
+    if (!shelter && !isLoading) {
         return (
             <div style={{ textAlign: 'center', padding: '50px' }}>
                 <Title level={3}>대피소 정보를 찾을 수 없습니다.</Title>

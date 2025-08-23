@@ -1,184 +1,145 @@
-import { Typography, Row, Col, message, Card } from 'antd';
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react';
+
+import { Typography, Row, Col, Card } from 'antd';
 import { useShelterStore } from '../store/useShelterStore'
 
-const { Title, } = Typography
+const { Title, } = Typography;
 
-import { COLORS } from '../styles/colors'
-import DonutChart from '../components/DonutChart'
-import { NotificationList } from '../components/NotificationList'
+import { COLORS } from '../styles/colors';
+import DonutChart from '../components/DonutChart';
 
-import { getShelter } from '../services/shelterService'
-import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShelter } from '../services/reliefService'
-import { getUser } from '../services/userService'
+import { getShelter } from '../services/shelterService';
+import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShelter } from '../services/reliefService';
 
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
+import { useAsync } from '../hooks/useAsync';
+import { getTimeAgo } from '../utils/getTimeAge';
+
 const Main = () => {
-    const selectedId = useShelterStore((s)=>s.selectedId)
-    const [shelter, setShelter] = useState(null)
-    const [statistics, setStatistics] = useState(null)
-    const [recentRequests, setRecentRequests] = useState([])
-    const [supplyLogs, setSupplyLogs] = useState([])
-    const [notifications, setNotifications] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
+    const selectedId = useShelterStore((s)=>s.selectedId);
 
-    // 시간 차이 계산 함수
-    const getTimeAgo = (dateString) => {
-        const now = new Date()
-        const past = new Date(dateString)
-        const diffMs = now - past
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-        const diffDays = Math.floor(diffHours / 24)
-        const remainingHours = diffHours % 24
-
-        if (diffHours < 24) {
-            return `${diffHours}시간 전`
-        } else if (remainingHours === 0) {
-            return `${diffDays}일 전`
-        } else {
-            return `${diffDays}일 ${remainingHours}시간 전`
+    const { data: shelterData, loading: shelterLoading } = useAsync(
+        () => selectedId ? getShelter(selectedId) : Promise.resolve({ success: false }),
+        [selectedId],
+        {
+            errorMessage: '대피소 정보를 불러올 수 없습니다.',
+            onError: (error) => console.error('대피소 조회 실패:', error)
         }
+    );
+
+    const { data: statisticsData, loading: statisticsLoading } = useAsync(
+        () => selectedId ? getReliefStatistics(selectedId, 7) : Promise.resolve({ success: false }),
+        [selectedId],
+        {
+            immediate: !!selectedId,
+            onError: (error) => {
+                console.error('통계 조회 실패:', error)
+                // 통계 실패 시에는 에러 메시지 표시하지 않음 (기본값 사용)
+            }
+        }
+    );
+
+    const { data: requestsData } = useAsync(
+        () => selectedId ? getReliefRequestsByShelter(selectedId) : Promise.resolve({ success: false }),
+        [selectedId],
+        {
+            immediate: !!selectedId,
+            onError: (error) => console.error('요청 조회 실패:', error)
+        }
+    );
+
+    const { data: suppliesData } = useAsync(
+        () => selectedId ? getReliefSuppliesByShelter(selectedId) : Promise.resolve({ success: false }),
+        [selectedId],
+        {
+            immediate: !!selectedId,
+            onError: (error) => console.error('구호품 공급 로그 조회 실패:', error)
+        }
+    );
+
+    // 데이터 추출 및 기본값 설정
+    const shelter = shelterData?.shelter || null
+    const statistics = statisticsData?.statistics || {
+        relief_items: [],
+        total_requests: 0,
+        total_supplies: 0,
+        pending_requests: 0
     }
+    // const recentRequests = requestsData?.requests?.slice(0, 5) || []
+    // const supplyLogs = suppliesData?.supplies?.slice(0, 10) || []
 
-    // 대피소 정보 및 통계 로드
-    useEffect(() => {
-        const loadData = async () => {
-            if (!selectedId) {
-                message.error('대피소가 선택되지 않았습니다.')
-                return
-            }
+    const notifications = useMemo(() => {
+        const allNotifications = []
 
-            try {
-                // 대피소 정보, 통계, 최근 요청, 구호품 공급 로그 병렬 조회
-                const [shelterResult, statisticsResult, requestsResult, suppliesResult] = await Promise.all([
-                    getShelter(selectedId),
-                    getReliefStatistics(selectedId, 7), // 최근 7일
-                    getReliefRequestsByShelter(selectedId),
-                    getReliefSuppliesByShelter(selectedId)
-                ])
-
-                if (shelterResult.success) {
-                    setShelter(shelterResult.shelter)
-                } else {
-                    message.error('대피소 정보를 불러올 수 없습니다.')
-                }
-
-                if (statisticsResult.success) {
-                    setStatistics(statisticsResult.statistics)
-                } else {
-                    console.error('통계 조회 실패:', statisticsResult.error)
-                    // 통계 조회 실패 시 기본값 설정
-                    setStatistics({
-                        relief_items: [],
-                        total_requests: 0,
-                        total_supplies: 0,
-                        pending_requests: 0
-                    })
-                }
-
-                if (requestsResult.success) {
-                    // 최근 요청 5개만 표시
-                    setRecentRequests(requestsResult.requests.slice(0, 5))
-                } else {
-                    console.error('요청 조회 실패:', requestsResult.error)
-                    // 요청 조회 실패 시 빈 배열 설정
-                    setRecentRequests([])
-                }
-
-                if (suppliesResult.success) {
-                    // 구호품 공급 로그에 사용자 정보 추가
-                    const suppliesWithUserInfo = await Promise.all(
-                        (suppliesResult.supplies || []).slice(0, 10).map(async (supply) => {
-                            if (supply.supplier_id) {
-                                try {
-                                    const userResult = await getUser(supply.supplier_id)
-                                    return {
-                                        ...supply,
-                                        supplier_user_info: userResult.success ? userResult.user : null
-                                    }
-                                } catch (error) {
-                                    console.warn('사용자 정보 조회 실패:', error)
-                                    return supply
-                                }
-                            }
-                            return supply
-                        })
-                    )
-                    setSupplyLogs(suppliesWithUserInfo)
-                } else {
-                    console.error('구호품 공급 로그 조회 실패:', suppliesResult.error)
-                    // 구호품 공급 로그 조회 실패 시 빈 배열 설정
-                    setSupplyLogs([])
-                }
-
-                // 알림마당 데이터 통합 및 정렬
-                const allNotifications = []
+        // 구호품 요청 알림 추가
+        if (requestsData?.success && requestsData.requests) {
+            requestsData.requests.forEach(request => {
+                const requesterName = request.requester_name || '관리자'
+                const itemsText = request.relief_items?.map(item => 
+                    `${item.item || item.item_name} ${item.quantity}${item.unit || '개'}`
+                ).join(', ') || '구호품'
                 
-                // 구호품 요청 알림 추가
-                if (requestsResult.success) {
-                    (requestsResult.requests || []).forEach(request => {
-                        // 요청자 정보 조회 (필요시 추가 구현)
-                        const requesterName = request.requester_name || '관리자'
-                        const itemsText = request.relief_items?.map(item => 
-                            `${item.item || item.item_name} ${item.quantity}${item.unit || '개'}`
-                        ).join(', ') || '구호품'
-                        
-                        allNotifications.push({
-                            id: `request_${request.request_id}`,
-                            type: 'request',
-                            message: `${requesterName}님이 필요 구호품으로 ${itemsText} 등록하셨습니다.`,
-                            timestamp: request.created_at,
-                            data: request
-                        })
-                    })
-                }
-
-                // 구호품 공급 알림 추가
-                if (suppliesResult.success) {
-                    const suppliesWithUserInfo = await Promise.all(
-                        (suppliesResult.supplies || []).map(async (supply) => {
-                            let supplierName = supply.supplier_name || '익명'
-                            
-                            if (supply.supplier_id) {
-                                try {
-                                    const userResult = await getUser(supply.supplier_id)
-                                    if (userResult.success) {
-                                        supplierName = userResult.user.display_name || userResult.user.email || '익명'
-                                    }
-                                } catch (error) {
-                                    console.warn('사용자 정보 조회 실패:', error)
-                                }
-                            }
-                            
-                            const suffix = supply.item_name && supply.item_name[supply.item_name.length - 1] && ['ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'].includes(supply.item_name[supply.item_name.length - 1]) ? '를' : '을';
-                            return {
-                                id: `supply_${supply.id || supply.supply_id}`,
-                                type: 'supply',
-                                message: `${supplierName}님이 필요 구호품 중 ${supply.item_name || '구호품'}${suffix} ${supply.supplied_quantity || 0}${supply.unit || '개'} 배송하였습니다.`,
-                                timestamp: supply.created_at,
-                                data: supply
-                            }
-                        })
-                    )
-                    allNotifications.push(...suppliesWithUserInfo)
-                }
-
-                // 시간순 정렬 (최신순)
-                allNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                
-                // 최대 15개만 표시
-                setNotifications(allNotifications.slice(0, 15))
-            } catch (error) {
-                message.error('데이터를 불러오는 중 오류가 발생했습니다.')
-                console.error('데이터 로드 오류:', error)
-            } finally {
-                setIsLoading(false)
-            }
+                allNotifications.push({
+                    id: `request_${request.request_id}`,
+                    type: 'request',
+                    message: `${requesterName}님이 필요 구호품으로 ${itemsText} 등록하셨습니다.`,
+                    timestamp: request.created_at,
+                    data: request
+                })
+            })
         }
 
-        loadData()
-    }, [selectedId])
+        // 구호품 공급 알림 추가
+        if (suppliesData?.success && suppliesData.supplies) {
+            suppliesData.supplies.forEach(supply => {
+                let supplierName = supply.supplier_name || '익명'
+                
+                // 사용자 정보가 있으면 사용 (추후 별도 훅으로 분리 가능)
+                if (supply.supplier_user_info) {
+                    supplierName = supply.supplier_user_info.display_name || 
+                                 supply.supplier_user_info.email || '익명'
+                }
+                
+                const suffix = supply.item_name && 
+                             supply.item_name[supply.item_name.length - 1] && 
+                             ['ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+                               .includes(supply.item_name[supply.item_name.length - 1]) ? '를' : '을'
+                
+                allNotifications.push({
+                    id: `supply_${supply.id || supply.supply_id}`,
+                    type: 'supply',
+                    message: `${supplierName}님이 필요 구호품 중 ${supply.item_name || '구호품'}${suffix} ${supply.supplied_quantity || 0}${supply.unit || '개'} 배송하였습니다.`,
+                    timestamp: supply.created_at,
+                    data: supply
+                })
+            })
+        }
+
+        // 시간순 정렬 (최신순) 및 최대 15개
+        return allNotifications
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 15)
+    }, [requestsData, suppliesData]);
+
+    // 구호품 공급률 계산
+    const reliefSupplyRate = useMemo(() => {
+        return statistics?.total_requests > 0 
+            ? Math.round(((statistics?.total_supplies || 0) / statistics.total_requests) * 100)
+            : 0
+    }, [statistics]);
+
+    // 로딩 상태 확인 (필수 데이터만)
+    const isLoading = shelterLoading || statisticsLoading;
+
+    // 선택된 대피소가 없을 때
+    if (!selectedId) {
+        return (
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+                <Title level={3}>대피소를 선택해주세요.</Title>
+            </div>
+        )
+    }
 
     // 로딩 중일 때 표시
     if (isLoading) {
@@ -187,6 +148,7 @@ const Main = () => {
         )
     }
 
+    // 대피소 정보를 찾을 수 없을 때
     if (!shelter) {
         return (
             <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -194,11 +156,6 @@ const Main = () => {
             </div>
         )
     }
-
-    // 구호품 공급률 계산
-    const reliefSupplyRate = statistics?.total_requests > 0 
-        ? Math.round(((statistics?.total_supplies || 0) / statistics.total_requests) * 100)
-        : 0
 
     return (
         <>
