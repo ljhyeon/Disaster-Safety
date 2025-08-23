@@ -1,50 +1,37 @@
-import { Button, Typography, Form, Input, message, Space, Select, Row, Col, Card, Upload, Table, Modal, Divider } from 'antd'
-import { UploadOutlined, InboxOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { Button, Typography, Form, Input, message, Space, Select, Row, Col, Card, Upload, Table, Modal, Divider } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
+
+import { COLORS } from '../styles/colors';
+const { Title } = Typography;
+const { Option } = Select;
+
 import { useAuthStore } from '../store/authStore'
-import { useState } from 'react'
 
-const { Title } = Typography
-const { Option } = Select
+import { createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
 
-import { COLORS } from '../styles/colors'
-import { createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService'
+import { useLoading } from '../hooks/useLoading';
+
+import { FIREBASE_SHELTER_FIELDS } from '../constants/firebaseFields';
+import { BOOLEAN_OPTIONS } from '../constants/shelterOptions';
 
 const ShelterRegister = () => {
-    const [form] = Form.useForm()
-    const navigate = useNavigate()
-    const { user } = useAuthStore()
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    
+    const [form] = Form.useForm();
+    const navigate = useNavigate();
+    const { user } = useAuthStore();
+
+    const { isLoading: isSubmitting, withLoading: withSubmitLoading } = useLoading();
+    const { isLoading: isBulkUploading, withLoading: withBulkLoading } = useLoading();
+
     // CSV 업로드 관련 상태
-    const [csvData, setCsvData] = useState([])
-    const [csvColumns, setCsvColumns] = useState([])
-    const [showMappingModal, setShowMappingModal] = useState(false)
-    const [columnMapping, setColumnMapping] = useState({})
-    const [isBulkUploading, setIsBulkUploading] = useState(false)
+    const [csvData, setCsvData] = useState([]);
+    const [csvColumns, setCsvColumns] = useState([]);
+    const [showMappingModal, setShowMappingModal] = useState(false);
+    const [columnMapping, setColumnMapping] = useState({});
 
-    const disasterTypes = Object.values(DISASTER_TYPES)
-
-    const booleanOptions = [
-        { label: '여', value: true },
-        { label: '부', value: false }
-    ]
-
-    // Firebase 필드 매핑 옵션
-    const firebaseFields = [
-        { label: '대피소명', value: 'shelterName' },
-        { label: '주소', value: 'location' },
-        { label: '위도', value: 'latitude' },
-        { label: '경도', value: 'longitude' },
-        { label: '재난유형', value: 'disasterType' },
-        { label: '수용가능인원', value: 'capacity' },
-        { label: '현재수용인원', value: 'currentOccupancy' },
-        { label: '장애인편의시설', value: 'hasDisabledFacility' },
-        { label: '반려동물수용', value: 'hasPetZone' },
-        { label: '운영상태', value: 'status' },
-        { label: '담당자명', value: 'contactPerson' },
-        { label: '담당자연락처', value: 'contactPhone' }
-    ]
+    const disasterTypes = Object.values(DISASTER_TYPES);
 
     const operationStatusOptions = Object.values(SHELTER_STATUS).map(status => ({
         label: status,
@@ -52,9 +39,7 @@ const ShelterRegister = () => {
     }))
 
     const handleSubmit = async (values) => {
-        setIsSubmitting(true)
-        
-        try {
+        await withSubmitLoading(async () => {
             const shelterData = {
                 shelterName: values.shelterName,
                 location: values.location,
@@ -76,19 +61,16 @@ const ShelterRegister = () => {
             if (result.success) {
                 message.success(`대피소가 성공적으로 등록되었습니다! (ID: ${result.shelter_id})`)
                 form.resetFields()
-                // 등록 후 홈으로 이동하거나 계속 등록할 수 있도록 선택지 제공
                 setTimeout(() => {
                     navigate('/home')
                 }, 2000)
             } else {
-                message.error(result.error.message)
+                throw new Error(result.error.message)
             }
-        } catch (error) {
-            message.error('대피소 등록 중 오류가 발생했습니다.')
+        }).catch(error => {
+            message.error(error.message || '대피소 등록 중 오류가 발생했습니다.')
             console.error('대피소 등록 오류:', error)
-        } finally {
-            setIsSubmitting(false)
-        }
+        })
     }
 
     const handleCancel = () => {
@@ -138,11 +120,10 @@ const ShelterRegister = () => {
             return
         }
 
-        setIsBulkUploading(true)
-        let successCount = 0
-        let errorCount = 0
+        await withBulkLoading(async () => {
+            let successCount = 0
+            let errorCount = 0
 
-        try {
             for (const row of csvData) {
                 const shelterData = {
                     managerId: user?.uid
@@ -173,12 +154,17 @@ const ShelterRegister = () => {
                 if (!shelterData.status) shelterData.status = '운영중'
                 if (!shelterData.disasterType) shelterData.disasterType = '지진'
 
-                const result = await createShelter(shelterData)
-                if (result.success) {
-                    successCount++
-                } else {
+                try {
+                    const result = await createShelter(shelterData)
+                    if (result.success) {
+                        successCount++
+                    } else {
+                        errorCount++
+                        console.error('대피소 등록 실패:', result.error)
+                    }
+                } catch (error) {
                     errorCount++
-                    console.error('대피소 등록 실패:', result.error)
+                    console.error('대피소 등록 오류:', error)
                 }
             }
 
@@ -190,12 +176,10 @@ const ShelterRegister = () => {
                 setColumnMapping({})
                 setShowMappingModal(false)
             }
-        } catch (error) {
+        }).catch(error => {
             message.error('벌크 업로드 중 오류가 발생했습니다.')
             console.error('벌크 업로드 오류:', error)
-        } finally {
-            setIsBulkUploading(false)
-        }
+        })
     }
 
     // 샘플 데이터 자동 입력
@@ -430,7 +414,7 @@ const ShelterRegister = () => {
                                 name="hasDisabledFacility"
                                 rules={[{ required: true, message: "장애인 편의시설 여부를 선택해주세요" }]}
                             >
-                                <Select placeholder="선택" options={booleanOptions} />
+                                <Select placeholder="선택" options={BOOLEAN_OPTIONS} />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
@@ -439,7 +423,7 @@ const ShelterRegister = () => {
                                 name="hasPetZone"
                                 rules={[{ required: true, message: "반려동물 수용 가능 여부를 선택해주세요" }]}
                             >
-                                <Select placeholder="선택" options={booleanOptions} />
+                                <Select placeholder="선택" options={BOOLEAN_OPTIONS} />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -545,7 +529,7 @@ const ShelterRegister = () => {
                                             [record.csvColumn]: value
                                         }))
                                     }}
-                                    options={firebaseFields}
+                                    options={FIREBASE_SHELTER_FIELDS}
                                 />
                             )
                         }
