@@ -12,9 +12,11 @@ import { getShelter } from '../services/shelterService';
 import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShelter } from '../services/reliefService';
 
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import NotificationList from '../components/notification/NotificationList';
 
 import { useAsync } from '../hooks/useAsync';
-import { getTimeAgo } from '../utils/getTimeAgo';
+
+import { v4 as uuidv4 } from 'uuid';
 
 const Main = () => {
     const selectedId = useShelterStore((s)=>s.selectedId);
@@ -79,9 +81,9 @@ const Main = () => {
                 const itemsText = request.relief_items?.map(item => 
                     `${item.item || item.item_name} ${item.quantity}${item.unit || '개'}`
                 ).join(', ') || '구호품'
-                
+
                 allNotifications.push({
-                    id: `request_${request.request_id}`,
+                    id: `request_${request.request_id || crypto.randomUUID() || uuidv4()}`, // fallback ID
                     type: 'request',
                     message: `${requesterName}님이 필요 구호품으로 ${itemsText} 등록하셨습니다.`,
                     timestamp: request.created_at,
@@ -100,14 +102,14 @@ const Main = () => {
                     supplierName = supply.supplier_user_info.display_name || 
                                  supply.supplier_user_info.email || '익명'
                 }
-                
+
                 const suffix = supply.item_name && 
-                             supply.item_name[supply.item_name.length - 1] && 
-                             ['ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
-                               .includes(supply.item_name[supply.item_name.length - 1]) ? '를' : '을'
-                
+                                ['ㄴ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+                                .includes(supply.item_name[supply.item_name.length - 1])
+                                ? '를' : '을'
+
                 allNotifications.push({
-                    id: `supply_${supply.id || supply.supply_id}`,
+                    id: `supply_${supply.id || supply.supply_id || crypto.randomUUID() || uuidv4()}`, // fallback ID
                     type: 'supply',
                     message: `${supplierName}님이 필요 구호품 중 ${supply.item_name || '구호품'}${suffix} ${supply.supplied_quantity || 0}${supply.unit || '개'} 배송하였습니다.`,
                     timestamp: supply.created_at,
@@ -241,55 +243,7 @@ const Main = () => {
                 </Col>
             </Row>
 
-            {/* 알림마당 */}
-            <Card title="알림마당" style={{ marginTop: '24px' }}>
-                {notifications.length > 0 ? (
-                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                        {notifications.map((notification, index) => (
-                            <div key={notification.id} style={{ 
-                                padding: '16px', 
-                                borderBottom: index < notifications.length - 1 ? '1px solid #f0f0f0' : 'none',
-                                display: 'flex',
-                                alignItems: 'flex-start'
-                            }}>
-                                <div style={{ 
-                                    width: '8px', 
-                                    height: '8px', 
-                                    borderRadius: '50%',
-                                    backgroundColor: notification.type === 'request' ? '#1890ff' : '#52c41a',
-                                    marginTop: '6px',
-                                    marginRight: '12px',
-                                    flexShrink: 0
-                                }} />
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ 
-                                        fontSize: '14px', 
-                                        lineHeight: '1.5',
-                                        marginBottom: '4px',
-                                        color: '#333'
-                                    }}>
-                                        {notification.message}
-                                    </div>
-                                    <div style={{ 
-                                        fontSize: '12px', 
-                                        color: '#999'
-                                    }}>
-                                        {getTimeAgo(notification.timestamp)}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div style={{ 
-                        textAlign: 'center', 
-                        padding: '40px 20px',
-                        color: '#999'
-                    }}>
-                        알림이 없습니다.
-                    </div>
-                )}
-            </Card>
+            <NotificationList title="알림마당" notifications={notifications} />
         </>
     )
 }
