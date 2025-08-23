@@ -1,35 +1,13 @@
-import { Progress, Typography, Row, Col, Tag, Modal, Table, Divider } from 'antd';
 import { useState } from 'react';
+import { Progress, Typography, Row, Col, Tag, Modal, Table, Divider } from 'antd';
+import { REQUEST_TABLE_COLUMNS } from '../constants/requestColumns';
+import { getStatusConfig } from '../utils/requestStatus';
 import '../styles/requestCard.css'
-import { COLORS } from '../styles/colors'
 
 const { Text, Title } = Typography;
 
 const RequestCard = ({ data }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-
-  // 배송 상태에 따른 색상 및 텍스트 설정
-  const getStatusConfig = (status, progress) => {
-    if (status === 'completed' || progress >= 100) {
-      return {
-        color: '#52c41a', // 녹색
-        text: '배송완료',
-        tagColor: 'success'
-      };
-    } else if (status === 'in_progress' || progress >= 50) {
-      return {
-        color: '#1890ff', // 파란색
-        text: '배송중',
-        tagColor: 'processing'
-      };
-    } else {
-      return {
-        color: '#f5222d', // 빨간색
-        text: '배송대기',
-        tagColor: 'error'
-      };
-    }
-  };
 
   const statusConfig = getStatusConfig(data.status, data.progress);
 
@@ -41,44 +19,6 @@ const RequestCard = ({ data }) => {
   const handleCancel = () => {
     setIsModalVisible(false);
   };
-
-  // 상세 정보 테이블 컬럼 정의
-  const columns = [
-    {
-      title: '구호품명',
-      dataIndex: 'item',
-      key: 'item',
-    },
-    {
-      title: '카테고리',
-      dataIndex: 'category',
-      key: 'category',
-    },
-    {
-      title: '요청량',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      render: (text, record) => `${text} ${record.unit}`,
-    },
-    {
-      title: '배송량',
-      dataIndex: 'supplied_quantity',
-      key: 'supplied_quantity',
-      render: (text, record) => `${text || 0} ${record.unit}`,
-    },
-    {
-      title: '배송률',
-      dataIndex: 'supply_rate',
-      key: 'supply_rate',
-      render: (text) => (
-        <Progress 
-          percent={text || 0} 
-          size="small" 
-          strokeColor={text >= 100 ? '#52c41a' : text >= 50 ? '#1890ff' : '#f5222d'}
-        />
-      ),
-    },
-  ];
 
   return (
     <>
@@ -159,7 +99,7 @@ const RequestCard = ({ data }) => {
         
         <Title level={5}>구호품 항목별 배송 현황</Title>
         <Table
-          columns={columns}
+          columns={REQUEST_TABLE_COLUMNS}
           dataSource={data.supplyDetails || []}
           rowKey={(record) => `${record.category}-${record.item}`}
           pagination={false}
