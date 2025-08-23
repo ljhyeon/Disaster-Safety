@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Layout, Input, Button, Form, Space, message, Upload, Checkbox } from 'antd';
-import { COLORS } from '../styles/colors';
 import { Logo } from '../components/login/Logo';
+import { COLORS } from '../styles/colors';
 // import { signUp } from '../services/authService'
 // import { USER_TYPES } from '../services/userService'
 import { useLoading } from '../hooks/useLoading';
+
 const { Content } = Layout;
 
 const SignUp = () => {

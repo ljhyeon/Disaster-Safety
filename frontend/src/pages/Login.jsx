@@ -1,11 +1,10 @@
-import { Layout, Input, Button, Form, Space, message } from 'antd'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS } from '../styles/colors'
-
+import { Layout, Input, Button, Form, Space, message } from 'antd'
 import { Logo } from '../components/login/Logo'
+import { COLORS } from '../styles/colors'
 import { signIn } from '../services/authService'
 import { useAuthStore } from '../store/authStore'
-import { useState } from 'react'
 
 const { Content } = Layout
 
