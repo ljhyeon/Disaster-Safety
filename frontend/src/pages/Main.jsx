@@ -13,6 +13,8 @@ import { getReliefStatistics, getReliefRequestsByShelter, getReliefSuppliesByShe
 
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import NotificationList from '../components/notification/NotificationList';
+import ShelterInfoCard from '../components/shelter/ShelterInfoCard';
+import ReliefInfoCard from '../components/shelter/ReliefInfoCard';
 
 import { useAsync } from '../hooks/useAsync';
 
@@ -195,51 +197,10 @@ const Main = () => {
             {/* 상세 정보 카드 */}
             <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
                 <Col xs={24} md={12}>
-                    <Card title="대피소 현황" size="small">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>수용 인원:</span>
-                            <span><strong>{shelter.current_occupancy}</strong> / {shelter.capacity}명</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>수용률:</span>
-                            <span><strong>{shelter.occupancy_rate}%</strong></span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>운영 상태:</span>
-                            <span style={{ 
-                                color: shelter.status === '운영중' ? '#52c41a' : 
-                                      shelter.status === '포화' ? '#ff4d4f' : '#faad14'
-                            }}>
-                                <strong>{shelter.status}</strong>
-                            </span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>재난 유형:</span>
-                            <span><strong>{shelter.disaster_type}</strong></span>
-                        </div>
-                    </Card>
+                    <ShelterInfoCard shelter={shelter} />
                 </Col>
                 <Col xs={24} md={12}>
-                    <Card title="구호품 현황 (최근 7일)" size="small">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>총 요청 건수:</span>
-                            <span><strong>{statistics?.total_requests || 0}</strong>건</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>총 공급 건수:</span>
-                            <span><strong>{statistics?.total_supplies || 0}</strong>건</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>대기 중 요청:</span>
-                            <span style={{ color: statistics?.pending_requests > 0 ? '#ff4d4f' : '#52c41a' }}>
-                                <strong>{statistics?.pending_requests || 0}</strong>건
-                            </span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span>공급률:</span>
-                            <span><strong>{reliefSupplyRate}%</strong></span>
-                        </div>
-                    </Card>
+                    <ReliefInfoCard statistics={statistics} reliefSupplyRate={reliefSupplyRate} />
                 </Col>
             </Row>
 
