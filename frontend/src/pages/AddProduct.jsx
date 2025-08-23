@@ -1,20 +1,17 @@
-import { Typography, Input, Button, Form, message, Space, Card, Select, Row, Col, InputNumber, Tag, Alert, Divider } from 'antd'
-import { useNavigate, useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Typography, Input, Button, Form, message, Space, Card, Select, Row, Col, InputNumber, Tag, Divider } from 'antd'
+import { useShelterStore } from '../store/useShelterStore'
+import { useAuthStore } from '../store/authStore'
+import { createReliefRequest, RELIEF_CATEGORIES, RELIEF_SUBCATEGORIES } from '../services/reliefService'
+import { useAsync } from '../hooks/useAsync';
+import { UNIT_OPTIONS } from '../constants/unitOptions';
+import { PRIORITY_OPTIONS } from '../constants/priorityOptions';
+// 더미데이터
+import { getAIRecommendations } from '../dummydata/getAIRecommendations';
 
 const { Title, Text } = Typography
 const { Option } = Select
-
-import { useShelterStore } from '../store/useShelterStore'
-import { useAuthStore } from '../store/authStore'
-
-import { createReliefRequest, RELIEF_CATEGORIES, RELIEF_SUBCATEGORIES } from '../services/reliefService'
-
-import { UNIT_OPTIONS } from '../constants/unitOptions';
-import { PRIORITY_OPTIONS } from '../constants/priorityOptions';
-
-// 더미데이터
-import { getAIRecommendations } from '../dummydata/getAIRecommendations';
 
 const AddProduct = () => {
     const [form] = Form.useForm()
@@ -23,7 +20,6 @@ const AddProduct = () => {
     const selectedId = useShelterStore((s)=>s.selectedId)
     const setSelectedId = useShelterStore((s)=>s.setSelectedId)
     const { user } = useAuthStore()
-    const [isSubmitting, setIsSubmitting] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState('')
 
     // URL 파라미터의 id를 store에 설정
@@ -48,23 +44,21 @@ const AddProduct = () => {
         setIsAIRecommendationApplied(false)
     }
 
-    const handleSubmit = async () => {
-        try {
-            const values = await form.validateFields()
-            
-            const currentShelterId = selectedId || id
+    const { loading: isSubmitting, execute: submit } = useAsync(
+        async () => {
+            const values = await form.validateFields();
+
+            const currentShelterId = selectedId || id;
             if (!currentShelterId) {
-                message.error('대피소가 선택되지 않았습니다.')
-                return
+                message.error('대피소가 선택되지 않았습니다.');
+                return;
             }
 
             if (!user?.uid) {
-                message.error('사용자 정보가 없습니다. 다시 로그인해주세요.')
-                return
+                message.error('사용자 정보가 없습니다. 다시 로그인해주세요.');
+                return;
             }
 
-            setIsSubmitting(true)
-            
             const requestData = {
                 shelterId: currentShelterId,
                 reliefItems: [{
@@ -79,26 +73,30 @@ const AddProduct = () => {
                 requesterId: user.uid,
                 priority: values.priority || 'normal',
                 notes: values.notes || '구호품 요청'
-            }
+            };
 
-            const result = await createReliefRequest(requestData)
+            const result = await createReliefRequest(requestData);
 
             if (result.success) {
-                message.success(result.message)
-                navigate(`/list/${currentShelterId}`)
+                message.success(result.message);
+                navigate(`/list/${currentShelterId}`);
             } else {
-                message.error(result.error?.message || '등록 중 오류가 발생했습니다.')
+                message.error(result.error?.message || '등록 중 오류가 발생했습니다.');
             }
-        } catch (error) {
-            if (error.errorFields) {
-                message.error('필수 정보를 모두 입력해주세요.')
-            } else {
-                message.error('등록 중 오류가 발생했습니다.')
-            }
-        } finally {
-            setIsSubmitting(false)
+        },
+        [selectedId, id, user],
+        {
+            onError: (error) => {
+                if (error?.errorFields) {
+                    message.error('필수 정보를 모두 입력해주세요.');
+                } else {
+                    message.error('등록 중 오류가 발생했습니다.');
+                    console.error('Relief submit error:', error);
+                }
+            },
+            immediate: false,
         }
-    }
+    );
 
     const handleCancel = () => {
         const currentShelterId = selectedId || id
@@ -131,7 +129,7 @@ const AddProduct = () => {
                         <Button onClick={handleCancel} disabled={isSubmitting}>취소</Button>
                         <Button 
                             type="primary" 
-                            onClick={handleSubmit}
+                            onClick={submit}
                             style={{ backgroundColor: '#001f91' }}
                             loading={isSubmitting}
                         >
