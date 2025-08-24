@@ -14,10 +14,10 @@ import LogoutConfirmDialog from '../components/LogoutConfirmDialog';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 
 import { useShelterStore } from '../store/shelterStore';
-import { useAuthStore } from '../store/authStore';
 
 // import TutorialHome from '../components/tutorials/home';
 import Tutorial from '../components/tutorials/tutorial';
+import { useAuth } from '../hooks/useAuth';
 
 const customIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
@@ -38,7 +38,7 @@ const specialIcon = new L.Icon({
 export function Home() {
     const navigate = useNavigate();
     const { setShelterInfo } = useShelterStore(); // 업데이트된 store 사용
-    const { logout } = useAuthStore(); // 인증 스토어에서 로그아웃 함수 가져오기
+    const { handleLogout } = useAuth();
 
     // 대피소 데이터 상태
     const [shelters, setShelters] = useState([]);
@@ -103,24 +103,8 @@ export function Home() {
 
     // 로그아웃 확인 핸들러
     const handleLogoutConfirm = async () => {
-        try {
-            const result = await logout();
-            if (result.success) {
-                console.log('🔥 Firebase 로그아웃 성공');
-                navigate('/login');
-                setIsLogoutDialogOpen(false);
-            } else {
-                console.error('❌ 로그아웃 실패:', result.error);
-                // 실패해도 강제로 로그아웃 처리
-            navigate('/login');
-            setIsLogoutDialogOpen(false);
-            }
-        } catch (error) {
-            console.error('❌ 로그아웃 처리 중 오류:', error);
-            // 오류가 발생해도 강제로 로그아웃 처리
-            navigate('/login');
-            setIsLogoutDialogOpen(false);
-        }
+        await handleLogout();
+        setIsLogoutDialogOpen(false);
     };
 
     // 로고 클릭 핸들러

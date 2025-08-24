@@ -3,50 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, TextField, Typography } from '@mui/material';
 
 import { Logo } from '../components/Logo';
-import { signIn } from '../services/authService';
-import { useAuthStore } from '../store/authStore';
+import { useAuth } from '../hooks/useAuth';
 
 export function Login() {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    const { setUser } = useAuthStore();
 
-    const handleLogin = async () => {
-        // 입력값 검증
-        if (!email || !password) {
-            setErrorMessage('이메일과 비밀번호를 모두 입력해주세요.');
-            return;
-        }
+    const { isLoading, errorMessage, handleSignIn, } = useAuth();
 
-        // 이메일 형식 검증
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            setErrorMessage('올바른 이메일 형식을 입력해주세요.');
-            return;
-        }
+    const onSubmit = () => handleSignIn(email, password);
 
-        setIsLoading(true);
-        setErrorMessage('');
-
-        try {
-            const result = await signIn(email, password);
-            
-            if (result.success) {
-                setUser(result.user);
-                console.log('로그인 성공:', result.user);
-            navigate('/home');
-            } else {
-                setErrorMessage(result.error.message);
-            }
-        } catch (error) {
-            console.error('로그인 실패:', error);
-            setErrorMessage('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-        } finally {
-            setIsLoading(false);
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            onSubmit();
         }
     };
 
@@ -88,11 +58,7 @@ export function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     error={Boolean(errorMessage && !password)}
                     disabled={isLoading}
-                    onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                            handleLogin();
-                        }
-                    }}
+                    onKeyPress={handleKeyPress}
                 />
 
                 {errorMessage && (
@@ -114,7 +80,7 @@ export function Login() {
                     <Button
                         fullWidth
                         variant="contained"
-                        onClick={handleLogin}
+                        onClick={onSubmit}
                         sx={{ ml: 1 }}
                         disabled={isLoading}
                     >

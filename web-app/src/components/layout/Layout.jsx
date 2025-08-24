@@ -14,11 +14,12 @@ import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 
 import { useShelterStore } from '../../store/shelterStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../hooks/useAuth';
 
 export function Layout({ description, children }) {
     const { shelterId } = useShelterStore(); // store에서 가져오기
-    const { logout } = useAuthStore(); // 인증 스토어에서 로그아웃 함수 가져오기
+    // const { logout } = useAuthStore(); // 인증 스토어에서 로그아웃 함수 가져오기
+    const { handleLogout } = useAuth();
 
     const theme = useTheme();
 
@@ -100,24 +101,8 @@ export function Layout({ description, children }) {
 
     // 로그아웃 확인 핸들러
     const handleLogoutConfirm = async () => {
-        try {
-            const result = await logout();
-            if (result.success) {
-                console.log('🔥 Firebase 로그아웃 성공');
-                navigate('/login');
-                setIsLogoutDialogOpen(false);
-            } else {
-                console.error('❌ 로그아웃 실패:', result.error);
-                // 실패해도 강제로 로그아웃 처리
-            navigate('/login');
-            setIsLogoutDialogOpen(false);
-            }
-        } catch (error) {
-            console.error('❌ 로그아웃 처리 중 오류:', error);
-            // 오류가 발생해도 강제로 로그아웃 처리
-            navigate('/login');
-            setIsLogoutDialogOpen(false);
-        }
+        await handleLogout();
+        setIsLogoutDialogOpen(false);
     };
 
     // 로고 클릭 핸들러
