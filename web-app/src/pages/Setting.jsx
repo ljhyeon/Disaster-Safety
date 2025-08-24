@@ -2,8 +2,8 @@ import { useState, } from 'react';
 import { Box, Typography, IconButton, Alert, Button } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import ControlPointRoundedIcon from '@mui/icons-material/ControlPointRounded';
-import { Form2Dialog } from '../components/Form2Dialog';
-import { AddressDialog } from '../components/AddressDialog';
+import { Form2Dialog } from '../components/dialog/Form2Dialog';
+import { AddressDialog } from '../components/dialog/AddressDialog';
 import { LoadingState } from '../components/common/LoadingState';
 import { useUserDonations } from '../hooks/useUserDonations';
 

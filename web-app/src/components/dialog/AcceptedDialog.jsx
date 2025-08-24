@@ -1,16 +1,7 @@
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogActions, 
-    Button, 
-    Typography
-} from '@mui/material';
+import { Dialog, DialogContent, DialogActions, Button, Typography} from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 
-export function AcceptedDialog({ 
-    open, 
-    onClose
-}) {
+export function AcceptedDialog({ open, onClose }) {
     return (
         <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
             <DialogContent sx={{ textAlign: 'center', py: 4 }}>

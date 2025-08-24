@@ -1,65 +1,14 @@
-import { 
-    Dialog, 
-    DialogTitle, 
-    DialogContent, 
-    DialogActions, 
-    Button, 
-    Box, 
-    Stack, 
-    Typography,
-    Chip,
-    Divider,
-    TextField
-} from '@mui/material';
-import { 
-    LocationOn, 
-    Schedule, 
-    Flag,
-    Category,
-} from '@mui/icons-material';
-
 import { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Stack, Typography, Chip, Divider, TextField } from '@mui/material';
+import { LocationOn, Schedule, Flag, Category,} from '@mui/icons-material';
+import { formatDate } from '../../utils/formatDate';
+import { getPriorityColor } from '../../utils/mapping';
 
-export function RequestDetailDialog({ 
-    open, 
-    onClose, 
-    onAccept, 
-    request,
-    loading = false 
-}) {
+export function RequestDetailDialog({ open, onClose, onAccept, request, loading = false }) {
     const [supplyQuantity, setSupplyQuantity] = useState('');
     const [error, setError] = useState('');
 
     if (!request) return null;
-
-    // 날짜 포맷팅
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    // 우선순위 색상 매핑
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case 'urgent':
-                return 'error';
-            case 'high':
-                return 'warning';
-            case 'normal':
-            case 'medium':
-                return 'info';
-            case 'low':
-                return 'success';
-            default:
-                return 'default';
-        }
-    };
 
     const handleQuantityChange = (value) => {
         setSupplyQuantity(value);

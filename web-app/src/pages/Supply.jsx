@@ -1,7 +1,7 @@
 import { useState, } from "react";
 import { Box, Typography, Button, Chip, Alert, Tabs, Tab } from '@mui/material';
-import { RequestDetailDialog } from '../components/RequestDetailDialog';
-import { AcceptedDialog } from '../components/AcceptedDialog';
+import { RequestDetailDialog } from '../components/dialog/RequestDetailDialog';
+import { AcceptedDialog } from '../components/dialog/AcceptedDialog';
 import { LoadingState } from "../components/common/LoadingState";
 import { useReliefRequests } from "../hooks/useReliefRequests";
 import { getMatchingLevel, filterRequestsByMatching } from "../utils/requestUtils";

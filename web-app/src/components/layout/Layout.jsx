@@ -6,7 +6,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { Box, BottomNavigation, BottomNavigationAction, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-import LogoutConfirmDialog from '../LogoutConfirmDialog';
+import LogoutConfirmDialog from '../dialog/LogoutConfirmDialog';
 
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import HomeIcon from '@mui/icons-material/Home';
@@ -18,7 +18,6 @@ import { useAuth } from '../../hooks/useAuth';
 
 export function Layout({ description, children }) {
     const { shelterId } = useShelterStore(); // store에서 가져오기
-    // const { logout } = useAuthStore(); // 인증 스토어에서 로그아웃 함수 가져오기
     const { handleLogout } = useAuth();
 
     const theme = useTheme();

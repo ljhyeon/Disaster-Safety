@@ -4,7 +4,7 @@ import { Box, Typography, Button, IconButton, CircularProgress, Alert } from '@m
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import Tutorial from '../components/tutorials/tutorial';
 import { LoadingState } from '../components/common/LoadingState';
-import LogoutConfirmDialog from '../components/LogoutConfirmDialog';
+import LogoutConfirmDialog from '../components/dialog/LogoutConfirmDialog';
 import { useShelterStore } from '../store/shelterStore';
 import { useAuth } from '../hooks/useAuth';
 import { useShelters } from '../hooks/useShelters';

@@ -1,43 +1,8 @@
 import { useState } from 'react';
-import { 
-    Dialog, 
-    DialogTitle, 
-    DialogContent, 
-    DialogActions, 
-    TextField, 
-    Button, 
-    Box, 
-    Stack, 
-    Typography,
-    MenuItem,
-    Select,
-    FormControl,
-    InputLabel,
-    CircularProgress
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, Stack, Typography, MenuItem, Select, FormControl, InputLabel, CircularProgress } from '@mui/material';
+import { COURIER_COMPANIES } from '../../constants/courierCompanies';
 
-const COURIER_COMPANIES = [
-    { value: 'cj', label: 'CJ대한통운' },
-    { value: 'hanjin', label: '한진택배' },
-    { value: 'lotte', label: '롯데택배' },
-    { value: 'logen', label: '로젠택배' },
-    { value: 'post', label: '우체국택배' },
-    { value: 'kdexp', label: '경동택배' },
-    { value: 'daesin', label: '대신택배' },
-    { value: 'epost', label: 'EMS' },
-    { value: 'other', label: '기타' }
-];
-
-export function TrackingDialog({ 
-    open, 
-    onClose, 
-    onSubmit, 
-    shelter, 
-    item, 
-    quantity, 
-    unit,
-    loading = false 
-}) {
+export function TrackingDialog({ open, onClose, onSubmit, shelter, item, quantity, unit, loading = false }) {
     const [formData, setFormData] = useState({
         courierCompany: '',
         trackingNumber: ''

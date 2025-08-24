@@ -1,11 +1,7 @@
 import { Dialog, DialogContent, DialogActions, Button, Box, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-export default function LogoutConfirmDialog({
-    open,
-    onClose,
-    onConfirm,
-}) {
+export default function LogoutConfirmDialog({ open, onClose, onConfirm, }) {
     const theme = useTheme();
 
     return (

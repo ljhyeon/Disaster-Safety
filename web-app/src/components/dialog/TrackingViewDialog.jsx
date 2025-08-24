@@ -1,21 +1,7 @@
-import { 
-    Dialog, 
-    DialogTitle, 
-    DialogContent, 
-    DialogActions, 
-    Button, 
-    Box, 
-    Stack, 
-    Typography,
-    Divider
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Stack, Typography, Divider } from '@mui/material';
 import { LocalShipping, Info } from '@mui/icons-material';
 
-export function TrackingViewDialog({ 
-    open, 
-    onClose, 
-    supply
-}) {
+export function TrackingViewDialog({ open, onClose, supply }) {
     if (!supply) return null;
 
     return (

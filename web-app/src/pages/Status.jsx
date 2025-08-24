@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Box, Typography, Chip, Alert, Button, } from '@mui/material';
 import { LoadingState } from "../components/common/LoadingState";
-import { TrackingDialog } from '../components/TrackingDialog';
-import { TrackingViewDialog } from '../components/TrackingViewDialog';
+import { TrackingDialog } from '../components/dialog/TrackingDialog';
+import { TrackingViewDialog } from '../components/dialog/TrackingViewDialog.jsx';
 import { getStatusInfo } from '../utils/mapping.jsx';
 import { useUserSupplies } from '../hooks/useUserSupplies';
 
