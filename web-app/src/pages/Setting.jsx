@@ -1,86 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, } from 'react';
 import { Box, Typography, IconButton, Alert, Button } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import ControlPointRoundedIcon from '@mui/icons-material/ControlPointRounded';
 import { Form2Dialog } from '../components/Form2Dialog';
 import { AddressDialog } from '../components/AddressDialog';
-import { addUserDonationItem, getUserDonationItems, deleteUserDonationItem } from '../services/reliefService';
-import { useAuthStore } from '../store/authStore';
 import { LoadingState } from '../components/common/LoadingState';
+import { useUserDonations } from '../hooks/useUserDonations';
 
 export function Setting() {
+    const {
+        donations,
+        loading,
+        error,
+        submitting,
+        loadDonations,
+        handleSubmit,
+        handleDelete
+    } = useUserDonations();
+
     const [open, setOpen] = useState(false);      // 기부 물품 Dialog
     const [addressOpen, setAddressOpen] = useState(false); // 주소 Dialog
     const [address, setAddress] = useState('내 주소');
-    const [donations, setDonations] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [submitting, setSubmitting] = useState(false);
-    
-    const { user } = useAuthStore();
-
-    // 희망 기부 물품 목록 로드
-    useEffect(() => {
-        if (user) {
-            loadDonations();
-        }
-    }, [user]);
-
-    const loadDonations = async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-            const result = await getUserDonationItems(user.uid);
-            if (result.success) {
-                setDonations(result.donations);
-            } else {
-                setError(result.error.message);
-            }
-        } catch (err) {
-            setError('희망 기부 물품을 불러오는 중 오류가 발생했습니다.');
-            console.error('기부 물품 로드 실패:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSubmit = async ({ item }) => {
-        if (!user) return;
-        
-        setSubmitting(true);
-        
-        try {
-            const result = await addUserDonationItem(user.uid, { item });
-            if (result.success) {
-                setOpen(false);
-                loadDonations(); // 목록 새로고침
-            } else {
-                alert(`기부 물품 등록 실패: ${result.error.message}`);
-            }
-        } catch (err) {
-            alert('기부 물품 등록 중 오류가 발생했습니다.');
-            console.error('기부 물품 등록 실패:', err);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDelete = async (donationId) => {
-        if (!confirm('이 기부 물품을 삭제하시겠습니까?')) return;
-        
-        try {
-            const result = await deleteUserDonationItem(donationId);
-            if (result.success) {
-                loadDonations(); // 목록 새로고침
-            } else {
-                alert(`기부 물품 삭제 실패: ${result.error.message}`);
-            }
-        } catch (err) {
-            alert('기부 물품 삭제 중 오류가 발생했습니다.');
-            console.error('기부 물품 삭제 실패:', err);
-        }
-    };
 
     const handleAddressSubmit = (newAddress) => {
         setAddress(newAddress);
@@ -155,7 +95,10 @@ export function Setting() {
             <Form2Dialog
                 open={open}
                 onClose={() => setOpen(false)}
-                onSubmit={handleSubmit}
+                onSubmit={async ({ item }) => {
+                    const result = await handleSubmit(item);
+                    if (result?.success) setOpen(false); // 등록 성공 시 닫기
+                }}
                 label1="물품명"
                 commnet="기부하고 싶은 물품을 입력해주세요"
                 loading={submitting}
