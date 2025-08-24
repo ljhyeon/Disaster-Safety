@@ -4,30 +4,13 @@ import { Box, Typography, Button, IconButton, CircularProgress, Alert } from '@m
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import Tutorial from '../components/tutorials/tutorial';
 import { LoadingState } from '../components/common/LoadingState';
+import { customIcon, specialIcon } from '../components/map/MapIcons';
+import { MapView } from '../components/map/MapView';
 import LogoutConfirmDialog from '../components/dialog/LogoutConfirmDialog';
 import { useShelterStore } from '../store/shelterStore';
 import { useAuth } from '../hooks/useAuth';
 import { useShelters } from '../hooks/useShelters';
-
-import { MapContainer, TileLayer, Marker, Popup, } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-const customIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.freepik.com/512/7294/7294032.png',
-  iconSize: [36, 36],
-  iconAnchor: [18, 36],
-  popupAnchor: [0, -36],
-});
-
-// 대구시민회관 전용 특별 아이콘 (빨간색, 더 크게, 높은 z-index)
-const specialIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.freepik.com/512/684/684908.png', // 빨간색 마커
-  iconSize: [42, 42], // 더 큰 크기
-  iconAnchor: [21, 42],
-  popupAnchor: [0, -42],
-  zIndexOffset: 9999, // 최대 z-index
-});
 
 export function Home() {
     const navigate = useNavigate();
@@ -132,54 +115,12 @@ export function Home() {
                         </Button>
                     </Box>
                 ) : (
-                    <MapContainer
-                        center={[35.8714, 128.6014]} // 대구 중심 좌표
-                        zoom={14}
-                        style={{ height: '100%', width: '100%' }}
-                        scrollWheelZoom={false}
-                    >
-                    <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                    <MapView 
+                        shelters={shelters} 
+                        onShelterSelect={handleSelectId} 
+                        customIcon={customIcon}
+                        specialIcon={specialIcon}
                     />
-                    {shelters.map((shelter, idx) => {
-                        // 대구시민회관인지 확인
-                        const isDaeguCitizenHall = shelter.shelter_name && shelter.shelter_name.includes('대구시민회관');
-                        
-                        return (
-                        <Marker
-                            key={shelter.id || idx}
-                            position={shelter.position}
-                            icon={isDaeguCitizenHall ? specialIcon : customIcon}
-                        >
-                            <Popup>
-                                <Box textAlign="center">
-                                    <Typography fontWeight="bold" fontSize={14}>
-                                        {shelter.shelter_name}
-                                    </Typography>
-                                    <Typography fontSize={12} sx={{ mb: 1 }}>
-                                        {shelter.location}
-                                    </Typography>
-                                    <Typography fontSize={11} color="text.secondary" sx={{ mb: 1 }}>
-                                        {shelter.disaster_type} • {shelter.status}
-                                    </Typography>
-                                    <Typography fontSize={11} color="text.secondary" sx={{ mb: 1 }}>
-                                        수용: {shelter.current_occupancy}/{shelter.capacity}명 ({shelter.occupancy_rate}%)
-                                    </Typography>
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        sx={{ mt: 1, fontSize: 12 }}
-                                        onClick={() => handleSelectId(shelter.shelter_id, shelter.shelter_name, shelter.location)}
-                                    >
-                                        상세보기 →
-                                    </Button>
-                                </Box>
-                            </Popup>
-                        </Marker>
-                        );
-                    })}
-                    </MapContainer>
                 )}
             </Box>
 
