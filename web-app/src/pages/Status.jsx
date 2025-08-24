@@ -1,47 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Box, Typography, Chip, Alert, Button, } from '@mui/material';
-import { CheckCircle, Cancel, Pending, LocalShipping } from '@mui/icons-material';
 import { LoadingState } from "../components/common/LoadingState";
-import { getReliefSuppliesByUser, updateSupplyTracking, RELIEF_SUPPLY_STATUS } from '../services/reliefService';
 import { TrackingDialog } from '../components/TrackingDialog';
 import { TrackingViewDialog } from '../components/TrackingViewDialog';
-import { useAuthStore } from '../store/authStore';
+import { getStatusInfo } from '../utils/mapping.jsx';
+import { useUserSupplies } from '../hooks/useUserSupplies';
 
 export function Status() {
-    const [supplies, setSupplies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const {
+        supplies,
+        loading,
+        error,
+        submitting,
+        loadSupplies,
+        handleTrackingSubmit
+    } = useUserSupplies();
+
     const [trackingOpen, setTrackingOpen] = useState(false);
     const [trackingViewOpen, setTrackingViewOpen] = useState(false);
     const [selectedSupply, setSelectedSupply] = useState(null);
-    const [submitting, setSubmitting] = useState(false);
-    
-    const { user } = useAuthStore();
-
-    useEffect(() => {
-        if (user) {
-            loadSupplies();
-        }
-    }, [user]);
-
-    const loadSupplies = async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-            const result = await getReliefSuppliesByUser(user.uid);
-            if (result.success) {
-                setSupplies(result.supplies);
-            } else {
-                setError(result.error.message);
-            }
-        } catch (err) {
-            setError('공급 이력을 불러오는 중 오류가 발생했습니다.');
-            console.error('공급 이력 로드 실패:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // 송장번호 등록/조회 모달 열기
     const handleTrackingClick = (supply) => {
@@ -54,82 +31,28 @@ export function Status() {
         }
     };
 
-    // 송장번호 등록 처리
-    const handleTrackingSubmit = async (trackingData) => {
-        if (!selectedSupply) return;
-        
-        setSubmitting(true);
-        
-        try {
-            const result = await updateSupplyTracking(selectedSupply.id, trackingData);
-            if (result.success) {
-                setTrackingOpen(false);
-                setSelectedSupply(null);
-                alert('송장번호가 등록되었습니다.');
-                loadSupplies(); // 목록 새로고침
-            } else {
-                alert(`송장번호 등록 실패: ${result.error.message}`);
-            }
-        } catch (err) {
-            alert('송장번호 등록 중 오류가 발생했습니다.');
-            console.error('송장번호 등록 실패:', err);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    // 상태별 색상 및 아이콘 매핑
-    const getStatusInfo = (status) => {
-        switch (status) {
-            case 'pending':
-                return { color: 'warning', icon: <Pending />, label: '대기중' };
-            case 'confirmed':
-                return { color: 'info', icon: <CheckCircle />, label: '확인됨' };
-            case 'shipped':
-                return { color: 'primary', icon: <LocalShipping />, label: '배송중' };
-            case 'delivered':
-                return { color: 'success', icon: <LocalShipping />, label: '전달완료' };
-            case 'cancelled':
-                return { color: 'error', icon: <Cancel />, label: '취소됨' };
-            default:
-                return { color: 'default', icon: <Pending />, label: status };
-        }
-    };
-
-    // 날짜 포맷팅
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    // 통계 계산
-    const statistics = supplies.reduce((acc, supply) => {
-        acc.total++;
-        switch (supply.status) {
-            case 'pending':
-                acc.pending++;
-                break;
-            case 'confirmed':
-                acc.confirmed++;
-                break;
-            case 'shipped':
-                acc.shipped++;
-                break;
-            case 'delivered':
-                acc.delivered++;
-                break;
-            case 'cancelled':
-                acc.cancelled++;
-                break;
-        }
-        return acc;
-    }, { total: 0, pending: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 });
+    // // 통계 계산
+    // const statistics = supplies.reduce((acc, supply) => {
+    //     acc.total++;
+    //     switch (supply.status) {
+    //         case 'pending':
+    //             acc.pending++;
+    //             break;
+    //         case 'confirmed':
+    //             acc.confirmed++;
+    //             break;
+    //         case 'shipped':
+    //             acc.shipped++;
+    //             break;
+    //         case 'delivered':
+    //             acc.delivered++;
+    //             break;
+    //         case 'cancelled':
+    //             acc.cancelled++;
+    //             break;
+    //     }
+    //     return acc;
+    // }, { total: 0, pending: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 });
 
     if (loading) {
         return <LoadingState message="공급 이력을 불러오는 중..." />;
