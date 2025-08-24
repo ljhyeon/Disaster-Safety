@@ -3,7 +3,7 @@ import { Box, Typography, Chip, Alert, Button, } from '@mui/material';
 import { LoadingState } from "../components/common/LoadingState";
 import { TrackingDialog } from '../components/dialog/TrackingDialog';
 import { TrackingViewDialog } from '../components/dialog/TrackingViewDialog.jsx';
-import { getStatusInfo } from '../utils/mapping.jsx';
+import { SupplyList } from '../components/supply/SupplyList';
 import { useUserSupplies } from '../hooks/useUserSupplies';
 
 export function Status() {
@@ -30,29 +30,6 @@ export function Status() {
             setTrackingOpen(true);
         }
     };
-
-    // // 통계 계산
-    // const statistics = supplies.reduce((acc, supply) => {
-    //     acc.total++;
-    //     switch (supply.status) {
-    //         case 'pending':
-    //             acc.pending++;
-    //             break;
-    //         case 'confirmed':
-    //             acc.confirmed++;
-    //             break;
-    //         case 'shipped':
-    //             acc.shipped++;
-    //             break;
-    //         case 'delivered':
-    //             acc.delivered++;
-    //             break;
-    //         case 'cancelled':
-    //             acc.cancelled++;
-    //             break;
-    //     }
-    //     return acc;
-    // }, { total: 0, pending: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 });
 
     if (loading) {
         return <LoadingState message="공급 이력을 불러오는 중..." />;
@@ -90,71 +67,7 @@ export function Status() {
                     </Typography>
                 </Box>
             ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    {supplies.map((supply, index) => {
-                        const statusInfo = getStatusInfo(supply.status);
-                        
-                        return (
-                            <Box key={supply.id}>
-                                <Box 
-                                    sx={{ 
-                                        cursor: 'pointer',
-                                        pl: 2,
-                                        pr: 2,
-                                        pt: 1,
-                                        pb: 1,
-                                        '&:hover': {
-                                            backgroundColor: 'action.hover'
-                                        },
-                                        transition: 'background-color 0.2s ease-in-out'
-                                    }}
-                                    onClick={() => handleTrackingClick(supply)}
-                                >
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                                        <Box sx={{ flex: 1 }}>
-                                            <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                                                {supply.item_name}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {supply.shelter?.shelter_name || '대피소 정보 없음'}
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                                            <Chip 
-                                                label={statusInfo.label}
-                                                color={statusInfo.color}
-                                                size="small"
-                                                icon={statusInfo.icon}
-                                            />
-                                            <Typography variant="body2" color="text.secondary">
-                                                배송 수량: {supply.supplied_quantity} {supply.unit}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-
-                                    {supply.courier_company && supply.tracking_number && (
-                                        <Box sx={{ mt: 2, p: 1, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
-                                            <Typography variant="body2" fontWeight="bold" color="primary">
-                                                배송 정보
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                택배사: {supply.courier_company} | 송장번호: {supply.tracking_number}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                </Box>
-                                
-                                {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
-                                {index < supplies.length - 1 && (
-                                    <Box sx={{ 
-                                        height: '1px', 
-                                        backgroundColor: 'divider'
-                                    }} />
-                                )}
-                            </Box>
-                        );
-                    })}
-                </Box>
+                <SupplyList supplies={supplies} onTrackingClick={handleTrackingClick} />
             )}
 
             <TrackingDialog
