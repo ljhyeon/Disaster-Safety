@@ -1,23 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-    Box, 
-    Typography, 
-    Card, 
-    CardContent, 
-    Chip, 
-    CircularProgress, 
-    Alert, 
-    Button,
-    Stack,
-    Divider
-} from '@mui/material';
-import { 
-    CheckCircle, 
-    Cancel, 
-    Pending, 
-    LocalShipping 
-} from '@mui/icons-material';
-
+import { Box, Typography, Chip, Alert, Button, } from '@mui/material';
+import { CheckCircle, Cancel, Pending, LocalShipping } from '@mui/icons-material';
+import { LoadingState } from "../components/common/LoadingState";
 import { getReliefSuppliesByUser, updateSupplyTracking, RELIEF_SUPPLY_STATUS } from '../services/reliefService';
 import { TrackingDialog } from '../components/TrackingDialog';
 import { TrackingViewDialog } from '../components/TrackingViewDialog';
@@ -148,19 +132,7 @@ export function Status() {
     }, { total: 0, pending: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 });
 
     if (loading) {
-        return (
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                minHeight: '400px',
-                flexDirection: 'column',
-                gap: 2
-            }}>
-                <CircularProgress />
-                <Typography>공급 이력을 불러오는 중...</Typography>
-            </Box>
-        );
+        return <LoadingState message="공급 이력을 불러오는 중..." />;
     }
 
     if (error) {

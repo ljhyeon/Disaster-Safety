@@ -12,6 +12,7 @@ import { Setting } from './pages/Setting';
 import theme from './theme';
 import { useAuthStore } from './store/authStore';
 import { useEffect } from 'react';
+import { LoadingState } from './components/common/LoadingState';
 
 // Layout이 필요없는 페이지들
 const noLayoutPages = ['/login', '/signup', '/home'];
@@ -123,6 +124,7 @@ function App() {
             justifyContent: 'center',
             alignItems: 'center',
             height: '100vh',
+            width: '100vw',
             flexDirection: 'column',
             gap: 2
           }}

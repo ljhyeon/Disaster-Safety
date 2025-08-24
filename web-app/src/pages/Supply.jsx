@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Chip, CircularProgress, Alert, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Button, Chip, Alert, Tabs, Tab } from '@mui/material';
 import { getAllReliefRequests, addReliefSupplySimple, getUserDonationItems } from "../services/reliefService";
 import { useAuthStore } from "../store/authStore";
 import { RequestDetailDialog } from '../components/RequestDetailDialog';
 import { AcceptedDialog } from '../components/AcceptedDialog';
 // import TutorialMain from "../components/tutorials/main";
+import { LoadingState } from "../components/common/LoadingState";
 
 export function Supply() {
     const [allRequests, setAllRequests] = useState([]);
@@ -238,19 +239,7 @@ export function Supply() {
     };
 
     if (loading) {
-        return (
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                minHeight: '400px',
-                flexDirection: 'column',
-                gap: 2
-            }}>
-                <CircularProgress />
-                <Typography>구호품 요청을 불러오는 중...</Typography>
-            </Box>
-        );
+        return <LoadingState message="구호품 요청을 불러오는 중..." />;
     }
 
     if (error) {

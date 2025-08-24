@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, CircularProgress, Alert, Button } from '@mui/material';
+import { Box, Typography, IconButton, Alert, Button } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import ControlPointRoundedIcon from '@mui/icons-material/ControlPointRounded';
 import { Form2Dialog } from '../components/Form2Dialog';
 import { AddressDialog } from '../components/AddressDialog';
 import { addUserDonationItem, getUserDonationItems, deleteUserDonationItem } from '../services/reliefService';
 import { useAuthStore } from '../store/authStore';
+import { LoadingState } from '../components/common/LoadingState';
 
 export function Setting() {
     const [open, setOpen] = useState(false);      // 기부 물품 Dialog
@@ -86,19 +87,7 @@ export function Setting() {
     };
 
     if (loading) {
-        return (
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                minHeight: '400px',
-                flexDirection: 'column',
-                gap: 2
-            }}>
-                <CircularProgress />
-                <Typography>희망 기부 물품을 불러오는 중...</Typography>
-            </Box>
-        );
+        return <LoadingState message='희망 기부 물품을 불러오는 중...' />;
     }
 
     return (
