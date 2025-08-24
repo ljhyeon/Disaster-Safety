@@ -7,6 +7,7 @@ export const LoadingState = ({ message = "로딩 중..." }) => (
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '400px',
+        width: '100vw',
         flexDirection: 'column',
         gap: 2
     }}>
