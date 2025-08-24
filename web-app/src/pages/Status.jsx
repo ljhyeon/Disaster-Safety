@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Typography, Chip, Alert, Button, } from '@mui/material';
 import { LoadingState } from "../components/common/LoadingState";
+import { ErrorState } from '../components/common/ErrorState.jsx';
 import { TrackingDialog } from '../components/dialog/TrackingDialog';
 import { TrackingViewDialog } from '../components/dialog/TrackingViewDialog.jsx';
 import { SupplyList } from '../components/supply/SupplyList';
@@ -36,16 +37,7 @@ export function Status() {
     }
 
     if (error) {
-        return (
-            <Box sx={{ p: 2 }}>
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-                <Button variant="outlined" onClick={loadSupplies}>
-                    다시 시도
-                </Button>
-            </Box>
-        );
+        return <ErrorState error={error} onRetry={loadSupplies} />;
     }
 
     return (

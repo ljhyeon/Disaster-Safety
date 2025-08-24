@@ -3,6 +3,8 @@ import { Box, Typography, Button, Chip, Alert, Tabs, Tab } from '@mui/material';
 import { RequestDetailDialog } from '../components/dialog/RequestDetailDialog';
 import { AcceptedDialog } from '../components/dialog/AcceptedDialog';
 import { LoadingState } from "../components/common/LoadingState";
+import { ErrorState } from '../components/common/ErrorState.jsx';
+import { EmptyState } from "../components/common/EmptyState.jsx";
 import { useReliefRequests } from "../hooks/useReliefRequests";
 import { getMatchingLevel, filterRequestsByMatching } from "../utils/requestUtils";
 
@@ -60,39 +62,11 @@ export function Supply() {
     }
 
     if (error) {
-        return (
-            <Box>
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-                <Button variant="outlined" onClick={loadAllRequests}>
-                    다시 시도
-                </Button>
-            </Box>
-        );
+        return <ErrorState error={error} onRetry={loadAllRequests} />;
     }
 
     if (userDonations.length === 0) {
-        return (
-            <Box>
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    minHeight: '300px',
-                    flexDirection: 'column',
-                    gap: 2
-                }}>
-                    <Typography variant="h6" color="text.secondary">
-                        희망 기부 물품이 등록되지 않았습니다
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요
-                    </Typography>
-                </Box>
-            </Box>
-            
-        );
+        return <EmptyState title="희망 기부 물품이 등록되지 않았습니다" description="먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요" />
     }
 
     if (allRequests.length === 0) {
@@ -116,24 +90,7 @@ export function Supply() {
                     </Box>
                 </Box>
 
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    minHeight: '300px',
-                    flexDirection: 'column',
-                    gap: 2
-                }}>
-                    <Typography variant="h6" color="text.secondary">
-                        현재 구호품 요청이 없습니다
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        등록된 구호품 요청이 없습니다
-                    </Typography>
-                    <Button variant="outlined" onClick={loadAllRequests}>
-                        새로고침
-                    </Button>
-                </Box>
+                <EmptyState title="현재 구호품 요청이 없습니다" description="등록된 구호품 요청이 없습니다" actionLabel="새로고침" onAction={loadAllRequests} />
             </Box>
         );
     }
@@ -214,21 +171,7 @@ export function Supply() {
             {activeTab === 0 && (
                 <Box>
                     {matchedRequests.length === 0 ? (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center', 
-                            minHeight: '300px',
-                            flexDirection: 'column',
-                            gap: 2
-                        }}>
-                            <Typography variant="h6" color="text.secondary">
-                                매칭된 구호품 요청이 없습니다
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요
-                            </Typography>
-                        </Box>
+                        <EmptyState title="매칭된 구호품 요청이 없습니다" description="먼저 '내 정보' 페이지에서 기부하고 싶은 물품을 등록해주세요" />
                     ) : (
                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                             {matchedRequests.map((request, index) => 
@@ -242,24 +185,7 @@ export function Supply() {
             {activeTab === 1 && (
                 <Box>
                     {allRequests.length === 0 ? (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            alignItems: 'center', 
-                            minHeight: '300px',
-                            flexDirection: 'column',
-                            gap: 2
-                        }}>
-                            <Typography variant="h6" color="text.secondary">
-                                현재 구호품 요청이 없습니다
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                등록된 구호품 요청이 없습니다
-                            </Typography>
-                            <Button variant="outlined" onClick={loadAllRequests}>
-                                새로고침
-                            </Button>
-                        </Box>
+                        <EmptyState title="현재 구호품 요청이 없습니다" description="등록된 구호품 요청이 없습니다" actionLabel="새로고침" onAction={loadAllRequests} />
                     ) : (
                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                             {allRequests.map((request, index) => 

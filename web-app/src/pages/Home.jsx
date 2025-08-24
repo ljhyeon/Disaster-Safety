@@ -4,6 +4,7 @@ import { Box, Typography, Button, IconButton, CircularProgress, Alert } from '@m
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import Tutorial from '../components/tutorials/tutorial';
 import { LoadingState } from '../components/common/LoadingState';
+import { ErrorState } from '../components/common/ErrorState';
 import { customIcon, specialIcon } from '../components/map/MapIcons';
 import { MapView } from '../components/map/MapView';
 import LogoutConfirmDialog from '../components/dialog/LogoutConfirmDialog';
@@ -98,22 +99,7 @@ export function Home() {
                         <Typography>대피소 정보를 불러오는 중...</Typography>
                     </Box>
                 ) : error ? (
-                    <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center', 
-                        height: '100%',
-                        flexDirection: 'column',
-                        gap: 2,
-                        px: 2
-                    }}>
-                        <Alert severity="error" sx={{ width: '100%', maxWidth: 400 }}>
-                            {error}
-                        </Alert>
-                        <Button variant="outlined" onClick={loadShelters}>
-                            다시 시도
-                        </Button>
-                    </Box>
+                    <ErrorState error={error} onRetry={loadShelters} />
                 ) : (
                     <MapView 
                         shelters={shelters} 
