@@ -1,83 +1,30 @@
-import { Button, Typography, Form, Input, message, Space, Select, Row, Col, Spin } from 'antd'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button, Typography, Form, Input, message, Space, Select, Row, Col } from 'antd'
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { COLORS } from '../styles/colors';
 import { useShelterStore } from '../store/useShelterStore'
-import { useAuthStore } from '../store/authStore'
-import { useEffect, useState } from 'react'
+import { updateShelter, createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
+import useShelterForm from '../hooks/shelter/useShelterForm';
+import { BOOLEAN_OPTIONS } from '../constants/shelterOptions'
 
 const { Title, } = Typography
 const { Option } = Select
 
-import { COLORS } from '../styles/colors';
-
-import { getShelter, updateShelter, createShelter, DISASTER_TYPES, SHELTER_STATUS } from '../services/shelterService';
-
 const disasterTypes = Object.values(DISASTER_TYPES);
-
-const booleanOptions = [
-    { label: '여', value: true },
-    { label: '부', value: false }
-];
 
 const operationStatusOptions = Object.values(SHELTER_STATUS).map(status => ({
     label: status,
     value: status
 }));
 
-
 const EditSetting = () => {
     const [form] = Form.useForm()
     const navigate = useNavigate()
     const selectedId = useShelterStore((s)=>s.selectedId)
-    const { user } = useAuthStore()
-    const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [shelter, setShelter] = useState(null)
-    const [isNewShelter, setIsNewShelter] = useState(false)
 
-    // 대피소 정보 로드
-    useEffect(() => {
-        const loadShelterData = async () => {
-            if (!selectedId || selectedId === 'new') {
-                // 새 대피소 생성 모드
-                setIsNewShelter(true)
-                setIsLoading(false)
-                return
-            }
-
-            try {
-                const result = await getShelter(selectedId)
-                if (result.success) {
-                    setShelter(result.shelter)
-                    // 폼 초기값 설정
-                    form.setFieldsValue({
-                        shelterName: result.shelter.shelter_name,
-                        location: result.shelter.location,
-                        disasterType: result.shelter.disaster_type,
-                        capacity: result.shelter.capacity,
-                        currentOccupancy: result.shelter.current_occupancy,
-                        hasDisabledFacility: result.shelter.has_disabled_facility,
-                        hasPetZone: result.shelter.has_pet_zone,
-                        status: result.shelter.status,
-                        contactPerson: result.shelter.contact_person,
-                        contactPhone: result.shelter.contact_phone,
-                        latitude: result.shelter.latitude,
-                        longitude: result.shelter.longitude
-                    })
-                } else {
-                    message.error('대피소 정보를 불러올 수 없습니다.')
-                    navigate('/home')
-                }
-            } catch (error) {
-                message.error('대피소 정보를 불러오는 중 오류가 발생했습니다.')
-                console.error('대피소 조회 오류:', error)
-                navigate('/home')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        loadShelterData()
-    }, [selectedId, form, navigate])
+    const { isNewShelter, isLoading, user } = useShelterForm(selectedId, form);
 
     const handleSubmit = async (values) => {
         setIsSubmitting(true)
@@ -137,19 +84,7 @@ const EditSetting = () => {
 
     // 로딩 중일 때 표시
     if (isLoading) {
-        return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '50vh',
-                flexDirection: 'column',
-                gap: '16px'
-            }}>
-                <Spin size="large" />
-                <div>대피소 정보를 불러오는 중...</div>
-            </div>
-        )
+        return <LoadingSpinner text="대피소 정보를 불러오는 중...<" />
     }
 
     return (
@@ -292,7 +227,7 @@ const EditSetting = () => {
                             name="hasDisabledFacility"
                             rules={[{ required: true, message: "장애인 편의시설 여부를 선택해주세요" }]}
                         >
-                            <Select placeholder="선택" options={booleanOptions} />
+                            <Select placeholder="선택" options={BOOLEAN_OPTIONS} />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -301,7 +236,7 @@ const EditSetting = () => {
                             name="hasPetZone"
                             rules={[{ required: true, message: "반려동물 수용 가능 여부를 선택해주세요" }]}
                         >
-                            <Select placeholder="선택" options={booleanOptions} />
+                            <Select placeholder="선택" options={BOOLEAN_OPTIONS} />
                         </Form.Item>
                     </Col>
                 </Row>
