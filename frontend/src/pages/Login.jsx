@@ -1,28 +1,39 @@
-import { Layout, Input, Button, Form, Space, message } from 'antd'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { COLORS } from '../styles/colors'
-
+import { Layout, Input, Button, Form, Space, message } from 'antd'
 import { Logo } from '../components/login/Logo'
+import { COLORS } from '../styles/colors'
+import { signIn } from '../services/authService'
+import { useAuthStore } from '../store/authStore'
 
 const { Content } = Layout
 
 const Login = () => {
     const navigate = useNavigate()
+    const [isLoading, setIsLoading] = useState(false)
+    const { setUser } = useAuthStore()
 
     const onLogin = async (values) => {
-        // const { user_id, password } = values
+        const { email, password } = values
+        
+        setIsLoading(true)
+        
         try {
-            // ✅ 여기에 실제 로그인 API 요청 예정 - api 폴더에 구현해서 들고오기
-            // const response = await loginService.login({ username, password })
-            // if (response.success) {
-            //   navigate(`/home`)
-            // }
-
-            console.log('로그인 요청: ', values)
-            message.success('로그인 성공 (예시)')
+            const result = await signIn(email, password)
+            
+            if (result.success) {
+                setUser(result.user)
+                console.log('로그인 성공:', result.user)
+                message.success('로그인 성공!')
             navigate('/home')
+            } else {
+                message.error(result.error.message)
+            }
         } catch (error) {
-            message.error('로그인 실패: ', error);
+            console.error('로그인 실패:', error)
+            message.error('로그인 중 오류가 발생했습니다.')
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -45,17 +56,20 @@ const Login = () => {
                     style={{ width: '380px' }}
                 >
                     <Form.Item
-                        name="user_id"
-                        rules={[{ required: true, message: '아이디를 입력하세요.' }]}
+                        name="email"
+                        rules={[
+                            { required: true, message: '이메일을 입력하세요.' },
+                            { type: 'email', message: '올바른 이메일 형식을 입력하세요.' }
+                        ]}
                     >
-                    <Input placeholder="아이디" />
+                        <Input placeholder="이메일" disabled={isLoading} />
                     </Form.Item>
 
                     <Form.Item
                         name="password"
                         rules={[{ required: true, message: '비밀번호를 입력하세요.' }]}
                     >
-                    <Input.Password placeholder="비밀번호" />
+                        <Input.Password placeholder="비밀번호" disabled={isLoading} />
                     </Form.Item>
 
                     <Form.Item style={{ marginTop: '2rem', marginBottom: 0 }}>
@@ -63,6 +77,7 @@ const Login = () => {
                             <Button
                                 style={{ backgroundColor: COLORS.primary, color: 'white' }}
                                 onClick={() => navigate('/signup')}
+                                disabled={isLoading}
                             >
                                 사용자 등록
                             </Button>
@@ -70,6 +85,7 @@ const Login = () => {
                                 type="primary"
                                 htmlType="submit"
                                 style={{ backgroundColor: COLORS.primary }}
+                                loading={isLoading}
                             >
                                 로그인
                             </Button>

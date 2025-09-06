@@ -1,12 +1,13 @@
+// 로그아웃이 왜 사라졌을까요
 // components/layouts/MainLayout.jsx
-import { Layout, Menu, Button, Typography } from 'antd'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { DashboardOutlined, WarningOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons'
+import { Layout, Menu, Button, Typography } from 'antd'
+import { DashboardOutlined, WarningOutlined, UserOutlined, HomeOutlined } from '@ant-design/icons'
 import { useShelterStore } from '../../store/useShelterStore'
+// import { useAuthStore } from '../../store/authStore'
 import { COLORS } from '../../styles/colors'
 
-const { Title, Text } = Typography
-
+const { Title, } = Typography
 const { Header, Sider, Content } = Layout
 
 export default function MainLayout() {
@@ -15,6 +16,7 @@ export default function MainLayout() {
     const selectedId = useShelterStore((s)=>s.selectedId)
     const name = useShelterStore((s)=>s.name)
     const setName = useShelterStore((s)=>s.setName)
+    // const { logout } = useAuthStore()
 
     const selectedKey = location.pathname.split('/')[1] || 'home'
 
@@ -27,12 +29,26 @@ export default function MainLayout() {
         navigate(`/${key}/${selectedId}`)
     }
 
-    const handleLogout = () => {
-        navigate('/login')
-    }
+    // const handleLogout = async () => {
+    //     try {
+    //         const result = await logout()
+    //         if (result.success) {
+    //             console.log('🔥 Firebase 로그아웃 성공')
+    //             navigate('/login')
+    //         } else {
+    //             console.error('❌ 로그아웃 실패:', result.error)
+    //             // 실패해도 강제로 로그아웃 처리
+    //             navigate('/login')
+    //         }
+    //     } catch (error) {
+    //         console.error('❌ 로그아웃 처리 중 오류:', error)
+    //         // 오류가 발생해도 강제로 로그아웃 처리
+    //     navigate('/login')
+    //     }
+    // }
 
     return (
-        <Layout style={{ height: '100vh', width: '100vw' }}>
+        <Layout style={{ height: '100vh', width: '100vw', overflowX: 'hidden' }}>
             <Sider 
                 breakpoint="lg" 
                 collapsedWidth="80" 
@@ -79,26 +95,29 @@ export default function MainLayout() {
                         }
                     ]}
                 />
-                {/* ✅ 하단 로그아웃 버튼 */}
+                {/* ✅ 하단 홈으로 버튼 */}
                 <div
-                style={{
-                    position: 'absolute',
-                    bottom: 20,
-                    width: '100%',
-                    textAlign: 'center',
-                }}
+                    style={{
+                        position: 'absolute',
+                        bottom: 20,
+                        width: '100%',
+                        textAlign: 'center',
+                    }}
                 >
                     <Button
                         type="text"
-                        icon={<LogoutOutlined />}
+                        icon={<HomeOutlined />}
                         style={{ color: COLORS.gray2 }}
-                        onClick={handleLogout}
+                        onClick={() => {
+                            navigate('/home')
+                            setName('')
+                        }}
                     >
-                        로그아웃
+                        홈으로
                     </Button>
                 </div>
             </Sider>
-            <Layout style={{ marginLeft: 200 }}>
+            <Layout style={{ marginLeft: 200, overflowX: 'hidden' }}>
                 <Header style={{ background: '#fff', padding: 0, fontSize: '24px', paddingLeft: '20px' }}>
                     <Title level={2} style={{ color: COLORS.gray7 }}>
                         {name}

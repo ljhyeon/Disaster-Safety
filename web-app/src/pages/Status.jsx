@@ -1,70 +1,53 @@
-import { useState } from "react";
-import { Item } from "../components/Item"
-import { Form2Dialog } from "../components/Form2Dialog";
-import { useShelterStore } from "../store/shelterStore";
+import { useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import { LoadingState } from "../components/common/LoadingState";
+import { ErrorState } from '../components/common/ErrorState.jsx';
+import { TrackingDialog } from '../components/dialogs/TrackingDialog';
+import { TrackingViewDialog } from '../components/dialogs/TrackingViewDialog.jsx';
+import { SupplyList } from '../components/supply/SupplyList';
+import { useUserSupplies } from '../hooks/useUserSupplies';
 
-export function Status() {
+export default function Status() {
+    const { supplies, loading, error, submitting, loadSupplies, handleTrackingSubmit } = useUserSupplies();
+    const [trackingOpen, setTrackingOpen] = useState(false);
+    const [trackingViewOpen, setTrackingViewOpen] = useState(false);
+    const [selectedSupply, setSelectedSupply] = useState(null);
 
-    const [open, setOpen] = useState(false);
-    const [selectedDonation, setSelectedDonation] = useState(null);
-    
-    const { donationList, updateDonation } = useShelterStore();
-    
-    const handleSubmit = (values) => {
-        console.log('송장 내용:', values);
-        
-        if (selectedDonation) {
-            // 기부 정보 업데이트 (송장 번호 등록)
-            updateDonation(selectedDonation.id, {
-                courierCompany: values.label1, // 택배사명
-                trackingNumber: values.label2, // 송장번호
-                status: 'shipped' // 배송 상태로 변경
-            });
-        }
-        
-        setOpen(false);
+    // 송장번호 등록/조회 모달 열기
+    const handleTrackingClick = (supply) => {
+        setSelectedSupply(supply);
+        supply.courier_company && supply.tracking_number ? setTrackingViewOpen(true) : setTrackingOpen(true);
     };
 
-    const handleButtonClick = (donation) => {
-        setSelectedDonation(donation);
-        setOpen(true);
-    };
+    if (loading) return <LoadingState message="공급 이력을 불러오는 중..." />;
+    if (error) return <ErrorState error={error} onRetry={loadSupplies} />;
 
     return (
-        <>
-            {
-                donationList.map((donation, idx) => (
-                    <Item
-                        title={donation.item}
-                        description={`${donation.shelterName}에 기부하기로 한 ${donation.item} ${donation.quantity}개`}
-                        location={donation.shelterName}
-                        showButton={true}
-                        buttonLabel={donation.trackingNumber ? '송장 번호 수정' : '송장 번호 등록'}
-                        onButtonClick={() => handleButtonClick(donation)}
-                        key={idx}
-                    />
-                ))
-            }
-
-            {donationList.length === 0 && (
-                <div style={{ 
-                    padding: '20px', 
-                    textAlign: 'center', 
-                    color: '#666',
-                    fontSize: '14px'
-                }}>
-                    아직 기부하기로 한 물품이 없습니다.
-                </div>
+        <Box>
+            {supplies.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', flexDirection: 'column', gap: 2 }}>
+                    <Typography variant="h6" color="text.secondary">아직 배송 이력이 없습니다</Typography>
+                    <Typography variant="body2" color="text.secondary">구호품 배송 페이지에서 도움이 필요한 대피소를 도와주세요</Typography>
+                </Box>
+            ) : (
+                <SupplyList supplies={supplies} onTrackingClick={handleTrackingClick} />
             )}
 
-            <Form2Dialog
-                open={open}
-                onClose={() => setOpen(false)}
-                onSubmit={handleSubmit}
-                label1="택배사명"
-                label2="송장번호"
-                commnet="송장번호를 입력해주세요"
+            <TrackingDialog
+                open={trackingOpen}
+                onClose={() => setTrackingOpen(false)}
+                onSubmit={(trackingData) => handleTrackingSubmit(selectedSupply.id, trackingData)}
+                item={selectedSupply?.item_name}
+                quantity={selectedSupply?.supplied_quantity}
+                unit={selectedSupply?.unit}
+                loading={submitting}
             />
-        </>
-    )
+
+            <TrackingViewDialog
+                open={trackingViewOpen}
+                onClose={() => setTrackingViewOpen(false)}
+                supply={selectedSupply}
+            />
+        </Box>
+    );
 }

@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "disastersafety-3e0ca"
+  },
+  "targets": {
+    "disastersafety-3e0ca": {
+      "hosting": {
+        "frontend": ["disastersafety-admin"],
+        "web-app": ["disastersafety-user"]
+      }
+    }
+  }
+}
