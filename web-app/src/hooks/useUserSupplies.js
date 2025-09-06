@@ -8,26 +8,15 @@ export const useUserSupplies = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
-    
     const { user } = useAuthStore();
 
-    useEffect(() => {
-        if (user) {
-            loadSupplies();
-        }
-    }, [user]);
-
+    // 사용자 공급 목록 불러오기
     const loadSupplies = async () => {
-        setLoading(true);
-        setError(null);
-        
+        setLoading(true); setError(null);
         try {
             const result = await getReliefSuppliesByUser(user.uid);
-            if (result.success) {
-                setSupplies(result.supplies);
-            } else {
-                setError(result.error.message);
-            }
+            if (result.success) setSupplies(result.supplies);
+            else setError(result.error.message);
         } catch {
             setError('공급 이력을 불러오는 중 오류가 발생했습니다.');
         } finally {
@@ -38,12 +27,11 @@ export const useUserSupplies = () => {
     // 송장번호 등록 처리
     const handleTrackingSubmit = async (supplyId, trackingData) => {
         setSubmitting(true);
-        
         try {
             const result = await updateSupplyTracking(supplyId, trackingData);
             if (result.success) {
                 alert('송장번호가 등록되었습니다.');
-                loadSupplies(); // 목록 새로고침
+                loadSupplies();
                 return { success: true };
             } else {
                 alert(`송장번호 등록 실패: ${result.error.message}`);
@@ -56,12 +44,7 @@ export const useUserSupplies = () => {
         }
     };
 
-    return {
-        supplies,
-        loading,
-        error,
-        submitting,
-        loadSupplies,
-        handleTrackingSubmit
-    };
+    useEffect(() => { if (user) loadSupplies(); }, [user]);
+
+    return { supplies, loading, error, submitting, loadSupplies, handleTrackingSubmit };
 };

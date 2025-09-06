@@ -9,39 +9,21 @@ export const useReliefRequests = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [supplying, setSupplying] = useState(false);
-    
     const { user } = useAuthStore();
 
     // 모든 구호품 요청 목록 로드
-    useEffect(() => {
-        if (user) {
-            loadAllRequests();
-        }
-    }, [user]);
+    useEffect(() => { if (user) loadAllRequests(); }, [user]);
 
     const loadAllRequests = async () => {
         if (!user) return;
-        
-        setLoading(true);
-        setError(null);
-        
+        setLoading(true); setError(null);
         try {
             const [allRequestsResult, userDonationsResult] = await Promise.all([
-                getAllReliefRequests(),
-                getUserDonationItems(user.uid)
+                getAllReliefRequests(), getUserDonationItems(user.uid)
             ]);
-            
-            if (allRequestsResult.success) {
-                setAllRequests(allRequestsResult.requests || []);
-            } else {
-                setError('구호품 요청을 불러올 수 없습니다.');
-            }
-            
-            if (userDonationsResult.success) {
-                setUserDonations(userDonationsResult.donations || []);
-            } else {
-                setUserDonations([]);
-            }
+            setAllRequests(allRequestsResult.success ? (allRequestsResult.requests || []) : []);
+            setUserDonations(userDonationsResult.success ? (userDonationsResult.donations || []) : []);
+            if (!allRequestsResult.success) setError('구호품 요청을 불러올 수 없습니다.');
         } catch {
             setError('데이터를 불러오는 중 오류가 발생했습니다.');
         } finally {
@@ -51,7 +33,6 @@ export const useReliefRequests = () => {
 
     const handleAccept = async (selectedRequest, acceptData) => {
         if (!selectedRequest || !user || !acceptData?.quantity) return;
-        
         setSupplying(true);
         try {
             const result = await addReliefSupplySimple(selectedRequest.request_id, user.uid, {
@@ -62,31 +43,16 @@ export const useReliefRequests = () => {
                 category: selectedRequest.category,
                 subcategory: selectedRequest.subcategory,
                 priority: selectedRequest.priority,
-                notes: selectedRequest.notes || '',
-                shelter_id: selectedRequest.shelter_id
+                notes: selectedRequest.notes || ''
             });
-
-            if (result.success) {
-                loadAllRequests(); // 목록 새로고침
-                return { success: true };
-            } else {
-                throw new Error(result.error.message);
-            }
+            if (result.success) { loadAllRequests(); return { success: true }; }
+            else throw new Error(result.error.message);
         } catch (error) {
-            console.log(error);
-            throw error;
+            console.log(error); throw error;
         } finally {
             setSupplying(false);
         }
     };
 
-    return {
-        allRequests,
-        userDonations,
-        loading,
-        error,
-        supplying,
-        loadAllRequests,
-        handleAccept
-    };
+    return { allRequests, userDonations, loading, error, supplying, loadAllRequests, handleAccept };
 };
