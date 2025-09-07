@@ -13,9 +13,9 @@ const noLayoutPages = ['/login', '/signup'];
 
 // 페이지별 description 정의
 const pageDescriptions = {
-  '/supply': <Typography variant="caption" sx={{ color: 'white', fontWeight: 500, textAlign: 'center', flex: 1 }}>각 대피소에서 필요로 하는 구호품이에요</Typography>,
-  '/status': <Typography variant="caption" sx={{ color: 'white', fontWeight: 500, textAlign: 'center', flex: 1 }}>내가 보내기로 한 구호품이에요</Typography>,
-  '/setting': <Typography variant="caption" sx={{ color: 'white', fontWeight: 500, textAlign: 'center', flex: 1 }}>입력한 정보에 따라 적절한 기부처를 추천해드려요</Typography>,
+  '/supply': <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textAlign: 'center', flex: 1 }}>구호품 매칭 결과</Typography>,
+  '/status': <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textAlign: 'center', flex: 1 }}>내가 보낸 구호품</Typography>,
+  '/setting': <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, textAlign: 'center', flex: 1 }}>내 정보</Typography>,
 };
 
 function AppContent() {

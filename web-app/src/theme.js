@@ -113,24 +113,23 @@ const theme = createTheme({
     MuiBottomNavigationAction: {
       styleOverrides: {
         root: ({ theme }) => ({
-            color: theme.palette.primary.light, // geekblue-6
-            backgroundColor: theme.palette.primary.main, // geekblue-7
-            '&.Mui-selected': {
-                color: theme.palette.primary.contrastText, // gray-2
-            },
-            '& .MuiBottomNavigationAction-label': {
-            ...theme.typography.caption,
-            marginTop: 4,
-            color: 'inherit',
-                '&.Mui-selected': {
-                color: 'inherit',
-                },
-            },
-            // 선택 시 생기는 아웃라인 없애기
-            '&.Mui-selected, &:focus-visible': {
-                outline: 'none',
-                boxShadow: 'none',
-            },
+          color: '#9CA3AF', // 안 눌린 상태
+          '&.Mui-selected': {
+            color: theme.palette.primary.main, // 눌린 상태
+          },
+          '& .MuiBottomNavigationAction-label': {
+          ...theme.typography.caption,
+          marginTop: 4,
+          color: 'inherit',
+              '&.Mui-selected': {
+              color: 'inherit',
+              },
+          },
+          // 선택 시 생기는 아웃라인 없애기
+          '&.Mui-selected, &:focus-visible': {
+              outline: 'none',
+              boxShadow: 'none',
+          },
         }),
       },
     },
