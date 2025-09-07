@@ -5,7 +5,7 @@ import { createTheme } from '@mui/material/styles';
 const geekblue = {
   600: '#2f54eb', // geekblue-6
   700: '#1d39c4', // geekblue-7
-  800: '#10239e', // geekblue-8
+  800: '#1428A0', // geekblue-8
 };
 
 const red = {
@@ -56,17 +56,17 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: [
-        'Pretendard',
-        '-apple-system',
-        'BlinkMacSystemFont',
-        'system-ui',
-        'Roboto',
-        'Helvetica Neue',
-        'Segoe UI',
-        'Apple SD Gothic Neo',
-        'Noto Sans KR',
-        'Malgun Gothic',
-        'sans-serif'
+      'Noto Sans KR',
+        // 'Pretendard',
+        // '-apple-system',
+        // 'BlinkMacSystemFont',
+        // 'system-ui',
+        // 'Roboto',
+        // 'Helvetica Neue',
+        // 'Segoe UI',
+        // 'Apple SD Gothic Neo',
+        // 'Malgun Gothic',
+        // 'sans-serif'
     ].join(','),
     // Headline 5
     h5: {
@@ -136,6 +136,12 @@ const theme = createTheme({
     },
     MuiButton: {
       styleOverrides: {
+        root: ({ theme }) => ({
+          minHeight: 40, // TextField와 동일 높이로 맞춤
+          padding: '0 16px', // 좌우 padding 유지
+          borderRadius: 8,   // TextField와 일관성 있게
+          ...theme.typography.button,
+        }),
         contained: ({ theme }) => ({
           backgroundColor: theme.palette.primary.main, // geekblue-7
           color: theme.palette.primary.contrastText, // gray-2
@@ -182,6 +188,30 @@ const theme = createTheme({
           paddingBottom: theme.spacing(2),
           minHeight: '80px !important',
         }),
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          marginTop: 8,
+          marginBottom: 0,
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          '& fieldset': {
+            border: '1px solid #D1D5DB', // 원하는 전체 테두리
+          },
+          '&.Mui-focused fieldset': {
+            border: '1px solid #2563EB', // focus 시 색상 (파랑 같은 거)
+          },
+          '&.Mui-error fieldset': {
+            border: '1px solid #EF4444', // error 시 빨강
+          },
+        },
       },
     },
   },

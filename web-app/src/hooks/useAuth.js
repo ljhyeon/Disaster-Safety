@@ -9,15 +9,21 @@ export const useAuth = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({}); // 클라이언트 에러
     const { setUser, logout } = useAuthStore();
 
     // 로그인
     const handleSignIn = async (email, password) => {
         if (!validateLoginForm(email, password)) return;
-        setIsLoading(true); setErrorMessage('');
+
+        setIsLoading(true); setFieldErrors({}); setErrorMessage('');
+
         try {
             const result = await signIn(email, password);
-            if (result.success) { setUser(result.user); navigate('/supply'); }
+            if (result.success) {
+                setUser(result.user);
+                navigate('/supply');
+            }
             else setErrorMessage(result.error.message);
         } catch { setErrorMessage('로그인 중 오류가 발생했습니다. 다시 시도해주세요.'); }
         finally { setIsLoading(false); }
@@ -47,7 +53,16 @@ export const useAuth = () => {
 
     // 로그인 폼 검증
     const validateLoginForm = (email, password) => {
-        if (!email || !password) { setErrorMessage('이메일과 비밀번호를 모두 입력해주세요.'); return false; }
+        const errors = {};
+
+        if (!email) errors.email = '아이디를 입력해주세요.';
+        if (!password) errors.password = '비밀번호를 입력해주세요.';
+
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return false;
+        }
+        
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) { setErrorMessage('올바른 이메일 형식을 입력해주세요.'); return false; }
         return true;
@@ -64,5 +79,5 @@ export const useAuth = () => {
         return true;
     };
 
-    return { isLoading, errorMessage, handleSignIn, handleSignUp, handleLogout, setErrorMessage };
+    return { isLoading, errorMessage, fieldErrors, handleSignIn, handleSignUp, handleLogout, setErrorMessage };
 };
