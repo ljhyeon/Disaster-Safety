@@ -49,8 +49,6 @@ export default function Supply() {
     // 매칭된 요청 필터링
     const { matched: matchedRequests } = filterRequestsByMatching(allRequests, userDonations);
 
-    console.log(matchedRequests)
-
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
             {/* 탭 네비게이션 */}

@@ -1,19 +1,37 @@
 import { Pending, CheckCircle, LocalShipping, Cancel } from "@mui/icons-material";
 
 // 우선순위 색상 매핑
-export const getPriorityColor = (priority) => {
+export const getPriorityBgColor = (priority) => {
     switch (priority) {
+        case '높음':
         case 'urgent':
-            return 'error';
         case 'high':
-            return 'warning';
+            return '#FFE6E6';
+        case '중간':
         case 'normal':
         case 'medium':
-            return 'info';
+            return '#FFFCEF';
+        case '낮음':
         case 'low':
-            return 'success';
         default:
-            return 'default';
+            return '#E5E7EB';
+    }
+};
+
+export const getPriorityTxtColor = (priority) => {
+    switch (priority) {
+        case '높음':
+        case 'urgent':
+        case 'high':
+            return '#A0141D';
+        case '중간':
+        case 'normal':
+        case 'medium':
+            return '#E29E00';
+        case '낮음':
+        case 'low':
+        default:
+            return '#1428A0';
     }
 };
 
