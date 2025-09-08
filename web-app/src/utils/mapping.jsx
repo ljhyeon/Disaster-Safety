@@ -10,11 +10,11 @@ export const getPriorityBgColor = (priority) => {
         case '중간':
         case 'normal':
         case 'medium':
-            return '#FFFCEF';
+            return '#E6EDFF';
         case '낮음':
         case 'low':
         default:
-            return '#E5E7EB';
+            return '#FFFCEF';
     }
 };
 
@@ -27,11 +27,11 @@ export const getPriorityTxtColor = (priority) => {
         case '중간':
         case 'normal':
         case 'medium':
-            return '#E29E00';
+            return '#2E14A0';
         case '낮음':
         case 'low':
         default:
-            return '#1428A0';
+            return '#E29E00';
     }
 };
 
