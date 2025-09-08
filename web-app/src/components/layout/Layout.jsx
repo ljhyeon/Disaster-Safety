@@ -5,6 +5,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { Box, BottomNavigation, BottomNavigationAction, IconButton, Menu, MenuItem, Divider } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import LogoutConfirmDialog from '../dialogs/LogoutConfirmDialog';
+import { AddressDialog } from '../dialogs/AddressDialog';
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -43,6 +44,14 @@ export function Layout({ description, children }) {
     const handleLogoutCancel = () => setIsLogoutDialogOpen(false);
     const handleLogoutConfirm = async () => { await handleLogout(); setIsLogoutDialogOpen(false); };
 
+    // 주소
+    const [address, setAddress] = useState(null);
+    const [addressOpen, setAddressOpen] = useState(false);
+    const handleAddressSubmit = (newAddress) => {
+        setAddress(newAddress)
+        console.log(address);
+    };
+
     // 메뉴 상태
     const [anchorEl, setAnchorEl] = useState(null);
     const menuOpen = Boolean(anchorEl);
@@ -57,7 +66,7 @@ export function Layout({ description, children }) {
         if (action === 'logout') {
             setIsLogoutDialogOpen(true);
         } else if (action === 'address') {
-            navigate('/setting/address'); // 예시: 주소 입력 페이지 이동
+            setAddressOpen(true)
         }
     };
 
@@ -131,6 +140,8 @@ export function Layout({ description, children }) {
             </BottomNavigation>
 
             <LogoutConfirmDialog open={isLogoutDialogOpen} onClose={handleLogoutCancel} onConfirm={handleLogoutConfirm} />
+            <AddressDialog open={addressOpen} onClose={() => setAddressOpen(false)} onSubmit={handleAddressSubmit} />
+
         </Box>
     );
 }

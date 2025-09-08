@@ -1,33 +1,172 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box } from '@mui/material';
+import { Box, Typography, Stack, FormControlLabel, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Checkbox } from '@mui/material';
 
 export function AddressDialog({ open, onClose, onSubmit }) {
-    const [address, setAddress] = useState('');
+    const [formData, setFormData] = useState({
+        userName: '',
+        contact: '',
+        postalCode: '',
+        roadAddress: '',
+        detailAddress: '',
+        isDefault: false
+    });
+
+    const [errors, setErrors] = useState({}); // 유효성 에러 상태
+
+    const handleInputChange = (field) => (e) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: e.target.value
+        }));
+        setErrors(prev => ({ ...prev, [field]: '' })); // 입력 시 에러 초기화
+    };
+
+    const handleCheckboxChange = (e) => {
+        setFormData(prev => ({
+            ...prev,
+            isDefault: e.target.checked
+        }));
+    };
+
+    const handlePostalCodeSearch = () => {
+        if (!window.daum || !window.daum.Postcode) {
+            alert('주소 검색 API 로드 실패');
+            return;
+        }
+
+        new window.daum.Postcode({
+            oncomplete: (data) => {
+                // 선택한 주소 정보를 state에 반영
+                setFormData(prev => ({
+                    ...prev,
+                    postalCode: data.zonecode,
+                    roadAddress: data.roadAddress,
+                    detailAddress: '' // 상세 주소는 사용자가 입력
+                }));
+            },
+            width: '100%',
+            height: '100%'
+        }).open();
+    };
 
     const handleSubmit = () => {
-        if (!address.trim()) return alert('주소를 입력해주세요');
-        onSubmit(address);
-        setAddress('');
+        const newErrors = {};
+
+        if (!formData.userName.trim()) newErrors.userName = '사용자명을 입력해주세요.';
+        if (!formData.contact.trim()) newErrors.contact = '연락처를 입력해주세요.';
+        if (formData.contact && !/^\d+$/.test(formData.contact)) newErrors.contact = '연락처는 숫자만 입력해주세요.';
+        if (!formData.postalCode.trim()) newErrors.postalCode = '우편번호를 입력해주세요.';
+        if (!formData.roadAddress.trim()) newErrors.roadAddress = '도로명 주소를 입력해주세요.';
+        if (!formData.detailAddress.trim()) newErrors.detailAddress = '상세 주소를 입력해주세요.';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        onSubmit(formData);
+        handleClose();
+    };
+
+    const handleClose = () => {
+        setFormData({
+            userName: '',
+            contact: '',
+            postalCode: '',
+            roadAddress: '',
+            detailAddress: '',
+            isDefault: false
+        });
+        setErrors({});
         onClose();
     };
 
+    if (!open) return null;
+
+
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>주소 입력</DialogTitle>
+            <DialogTitle sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <Typography variant="h6" component="h2">
+                    주소 입력
+                </Typography>
+                <Typography variant="body2" color="#6B7280" sx={{ mt: 1 }}>
+                    사용자의 주소와 연락처를 입력해주세요.
+                </Typography>
+            </DialogTitle>
             <DialogContent>
-                <Box mt={1}>
+                <Stack spacing={3} sx={{ mt: 1 }}>
                     <TextField
-                        label="주소"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
                         fullWidth
+                        placeholder="사용자명"
+                        value={formData.userName}
+                        onChange={handleInputChange('userName')}
+                        error={!!errors.userName}
+                        helperText={errors.userName || ''}
+                        variant="outlined"
                     />
-                </Box>
+
+                    <TextField
+                        fullWidth
+                        placeholder="연락처 (숫자만)"
+                        value={formData.contact}
+                        onChange={handleInputChange('contact')}
+                        error={!!errors.contact}
+                        helperText={errors.contact || ''}
+                        variant="outlined"
+                    />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TextField
+                            placeholder="우편번호(5자리)"
+                            value={formData.postalCode}
+                            // 직접 입력 못하게 readOnly
+                            InputProps={{ readOnly: true }}
+                            error={!!errors.postalCode}
+                            helperText={errors.postalCode || ''}
+                            variant="outlined"
+                            sx={{ flex: 1, m: 0 }}
+                        />
+                        <Button variant="contained" onClick={handlePostalCodeSearch} sx={{ height: '56px' }}>
+                            주소검색
+                        </Button>
+                    </Box>
+
+                    <TextField
+                        fullWidth
+                        placeholder="도로명 주소"
+                        value={formData.roadAddress}
+                        InputProps={{ readOnly: true }} // 읽기 전용
+                        error={!!errors.roadAddress}
+                        helperText={errors.roadAddress || ''}
+                        variant="outlined"
+                    />
+
+                    <TextField
+                        fullWidth
+                        placeholder="상세 주소 (동/호)"
+                        value={formData.detailAddress}
+                        onChange={handleInputChange('detailAddress')}
+                        error={!!errors.detailAddress}
+                        helperText={errors.detailAddress || ''}
+                        variant="outlined"
+                    />
+
+                    <Box sx={{ pt: 1 }}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox checked={formData.isDefault} onChange={handleCheckboxChange} />
+                            }
+                            label='기본 주소지로 설정'
+                        />
+                    </Box>
+                </Stack>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleSubmit} variant="contained" sx={{ margin: '0 auto', width: 120 }}>
-                    확인
-                </Button>
+            <DialogActions sx={{ p: 2 }}>
+                <Box display="flex" justifyContent="space-between" sx={{ width: "100%", gap: 1 }}>
+                    <Button onClick={handleClose} variant="outlined" sx={{ flex: 1, }}>닫기</Button>
+                    <Button onClick={handleSubmit} variant="contained" sx={{ flex: 1, }}>등록하기</Button>
+                </Box>
             </DialogActions>
         </Dialog>
     );
