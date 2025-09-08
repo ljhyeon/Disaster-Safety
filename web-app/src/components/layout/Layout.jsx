@@ -69,9 +69,9 @@ export function Layout({ description, children }) {
     ];
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: '100vw' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
             {/* 상단바 */}
-            <AppBar position="fixed">
+            <AppBar position="static">
                 <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1 }}>
                     {/* 왼쪽 여백 (빈 Box로 균형 맞춤) */}
                     <Box sx={{ width: 40 }} />
@@ -115,12 +115,12 @@ export function Layout({ description, children }) {
             </AppBar>
 
             {/* 메인 컨텐츠 */}
-            <Box sx={{ flex: 1, mt: '80px', mb: '80px', overflow: 'auto', minHeight: 0 }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', minHeight: 0 }}>
                 {children}
             </Box>
             
             {/* 하단 네비게이션 */}
-            <BottomNavigation sx={{ width: '100%', position: 'fixed', bottom: 0, borderTop: 1, borderColor: 'divider', height: '80px' }} value={value} onChange={handleChange} showLabels>
+            <BottomNavigation sx={{ width: '100%', borderTop: 1, borderColor: 'divider', height: '80px', flexShrink: 0 }} value={value} onChange={handleChange} showLabels>
                 {navItems.map(({ label, value: itemValue, icon: Icon }) => {
                     const selected = value === itemValue;
                     const iconColor = selected ? theme.palette.secondary.main : theme.palette.primary.light;
