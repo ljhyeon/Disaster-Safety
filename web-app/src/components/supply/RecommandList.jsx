@@ -1,19 +1,20 @@
-// components/supply/RequestList.jsx
+// components/supply/RecommandList.jsx
 import { Box } from '@mui/material';
-import RequestItem from './RequestItem';
+import RecommandItem from './RecommandItem';
 
-const RequestList = ({ requests, onRequestClick }) => {
+const RecommandList = ({ requests, onRequestClick }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', }}>
-            {requests.map((request) => (
-                <RequestItem
+            {requests.map((request, idx) => (
+                <RecommandItem
                     key={request.id}
                     request={request}
                     onRequestClick={onRequestClick}
+                    priority={idx+1}
                 />
             ))}
         </Box>
     );
 };
 
-export default RequestList;
+export default RecommandList;
