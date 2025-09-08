@@ -6,6 +6,7 @@ import { TrackingDialog } from '../components/dialogs/TrackingDialog';
 import { TrackingViewDialog } from '../components/dialogs/TrackingViewDialog.jsx';
 import { SupplyList } from '../components/supply/SupplyList';
 import { useUserSupplies } from '../hooks/useUserSupplies';
+import { EmptyState } from '../components/common/EmptyState.jsx';
 
 export default function Status() {
     const { supplies, loading, error, submitting, loadSupplies, handleTrackingSubmit } = useUserSupplies();
@@ -23,12 +24,9 @@ export default function Status() {
     if (error) return <ErrorState error={error} onRetry={loadSupplies} />;
 
     return (
-        <Box>
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
             {supplies.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', flexDirection: 'column', gap: 2 }}>
-                    <Typography variant="h6" color="text.secondary">아직 배송 이력이 없습니다</Typography>
-                    <Typography variant="body2" color="text.secondary">구호품 배송 페이지에서 도움이 필요한 대피소를 도와주세요</Typography>
-                </Box>
+                <EmptyState title="등록된 구호품이 없습니다" description="필요 물품을 확인하고 등록해 보세요." />
             ) : (
                 <SupplyList supplies={supplies} onTrackingClick={handleTrackingClick} />
             )}
@@ -43,11 +41,11 @@ export default function Status() {
                 loading={submitting}
             />
 
-            <TrackingViewDialog
+            {/* <TrackingViewDialog
                 open={trackingViewOpen}
                 onClose={() => setTrackingViewOpen(false)}
                 supply={selectedSupply}
-            />
+            /> */}
         </Box>
     );
 }

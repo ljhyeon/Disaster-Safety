@@ -35,17 +35,24 @@ export function TrackingDialog({ open, onClose, onSubmit, item, quantity, unit, 
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>송장번호 등록</DialogTitle>
+            <DialogTitle sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <Typography variant="h6" component="h2">
+                    송장번호를 등록해주세요
+                </Typography>
+                <Typography variant="body2" color="#6B7280" sx={{ mt: 1 }}>
+                    기부하신 구호품의 배송 현황을 추적할 수 있습니다
+                </Typography>
+            </DialogTitle>
             <DialogContent>
                 <Box sx={{ py: 2 }}>
                     {/* 배송 정보 */}
-                    <Stack spacing={2} sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    {/* <Stack spacing={2} sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                         <Typography variant="subtitle1" fontWeight="bold">배송 정보</Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Typography variant="body2" fontWeight="bold">물품:</Typography>
                             <Typography variant="body2">{item || '구호품'} {quantity || 0}{unit || '개'}</Typography>
                         </Box>
-                    </Stack>
+                    </Stack> */}
                     {/* 송장 정보 입력 */}
                     <Stack spacing={3}>
                         <FormControl fullWidth error={!!errors.courierCompany}>

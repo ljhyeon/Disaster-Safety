@@ -5,12 +5,11 @@ import { SupplyItem } from './SupplyItem';
 export const SupplyList = ({ supplies, onTrackingClick }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {supplies.map((supply, index) => (
+            {supplies.map((supply) => (
                 <SupplyItem
                     key={supply.id}
                     supply={supply}
                     onTrackingClick={onTrackingClick}
-                    isLast={index === supplies.length - 1}
                 />
             ))}
         </Box>

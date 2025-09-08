@@ -38,17 +38,20 @@ export const getPriorityTxtColor = (priority) => {
 // 상태별 색상 및 아이콘 매핑
 export const getStatusInfo = (status) => {
     switch (status) {
+        case '대기중':
         case 'pending':
-            return { color: 'warning', icon: <Pending />, label: '대기중' };
+            return { backgroundColor: '#FFFCEF', color: '#E29E00', label: '대기중' };
+        case '완료':
         case 'confirmed':
-            return { color: 'info', icon: <CheckCircle />, label: '확인됨' };
+            return { backgroundColor: '#FFEFEF', color: '#FF0000', label: '확인됨' };
+        case '배송중':
         case 'shipped':
-            return { color: 'primary', icon: <LocalShipping />, label: '배송중' };
+            return { backgroundColor: '#EFF6FF', color: '#1428A0', label: '배송중' };
         case 'delivered':
-            return { color: 'success', icon: <LocalShipping />, label: '전달완료' };
+            return { color: 'success', label: '전달완료' };
         case 'cancelled':
-            return { color: 'error', icon: <Cancel />, label: '취소됨' };
+            return { color: 'error', label: '취소됨' };
         default:
-            return { color: 'default', icon: <Pending />, label: status };
+            return { color: 'default', label: status };
     }
 };
