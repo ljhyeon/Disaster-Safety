@@ -62,7 +62,7 @@ export function AddDialog({ open, onClose, onSubmit }) {
             maxWidth="sm"
             fullWidth
         >
-            <DialogTitle>
+            <DialogTitle sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
                     기부 물품 등록
                 </Typography>

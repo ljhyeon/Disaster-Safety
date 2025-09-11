@@ -81,9 +81,9 @@ export function TrackingDialog({ open, onClose, onSubmit, item, quantity, unit, 
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
                 <Box display="flex" justifyContent="space-between" sx={{ width: "100%", gap: 1 }}>
-                    <Button onClick={handleClose} variant="outlined" disabled={loading} sx={{ flex: 1 }}>취소</Button>
+                    <Button onClick={handleClose} variant="outlined" disabled={loading} sx={{ flex: 1 }}>닫기</Button>
                     <Button onClick={handleSubmit} variant="contained" disabled={loading} sx={{ flex: 1 }}>
-                        {loading ? (<><CircularProgress size={20} sx={{ mr: 1 }} />등록 중...</>) : '등록'}
+                        {loading ? (<><CircularProgress size={20} sx={{ mr: 1 }} />접수 중...</>) : '접수하기'}
                     </Button>
                 </Box>
             </DialogActions>

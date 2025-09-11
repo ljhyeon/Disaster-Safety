@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Stack, Typography, Chip, TextField, IconButton, InputAdornment } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Stack, Typography, Chip, TextField, IconButton, InputAdornment, } from '@mui/material';
 import { Schedule, Flag, Category } from '@mui/icons-material';
 import { formatDate } from '../../utils/formatDate';
 import { getPriorityBgColor, getPriorityTxtColor } from '../../utils/mapping';
@@ -34,18 +34,18 @@ export function RequestDetailDialog({ open, onClose, onAccept, request, loading 
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ width: 30 }}>
-                        <IconButton color="inherit" onClick={handleClose}>
-                            <ArrowBackIcon />
-                        </IconButton>
-                    </Box>
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E0E0E0'}}>
+                <Box sx={{ width: 30 }}>
+                    <IconButton color="inherit" onClick={handleClose}>
+                        <ArrowBackIcon />
+                    </IconButton>
+                </Box>
 
-                    <Typography variant="h6" component="div">구호품 요청 상세정보</Typography>
+                <Typography variant="h6" component="div">구호품 요청 상세정보</Typography>
 
-                    <Box sx={{ width: 30, display: 'flex', justifyContent: 'flex-end' }} />
+                <Box sx={{ width: 30, display: 'flex', justifyContent: 'flex-end' }} />
             </DialogTitle>
-            <DialogContent>
+            <DialogContent sx={{ mt: 3 }}>
                 <Stack spacing={3}>
                     {/* 기본 정보 */}
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
