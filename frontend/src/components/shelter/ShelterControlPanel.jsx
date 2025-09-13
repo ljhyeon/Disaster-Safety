@@ -1,10 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Button, Space, Avatar, Input, List, Tag, Progress } from 'antd';
-import { UserOutlined, SearchOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { MapPin } from 'lucide-react';
+import { UserOutlined, SearchOutlined, QuestionCircleOutlined, EnvironmentFilled, } from '@ant-design/icons';
 
 export const ShelterControlPanel = ({ shelters }) => {
-    console.log(shelters)
     const [query, setQuery] = useState('');
 
     // 검색 필터
@@ -112,7 +110,8 @@ export const ShelterControlPanel = ({ shelters }) => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                <MapPin size={12} color='#3B82F6' />
+                                                {/* <MapPin size={12} color='#3B82F6' /> */}
+                                                <EnvironmentFilled style={{ color: '#3B82F6' }} />
                                                 <span style={{ fontWeight: 600 }}>{item.shelter_name}</span>
                                             </div>
                                             <Tag color="#EFF6FF" style={{ color: '#1D4ED8', borderRadius: 24 }}>
