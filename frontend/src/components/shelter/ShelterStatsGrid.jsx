@@ -13,10 +13,8 @@ export const ShelterStatsGrid = ({ shelter, statistics, reliefSupplyRate }) => {
             </Col>
             <Col xs={24} sm={12} md={8}>
                 <DonutChart 
-                    title="대기 요청률" 
-                    value={statistics?.total_requests > 0 
-                        ? Math.round(((statistics?.pending_requests || 0) / statistics.total_requests) * 100)
-                        : 0} 
+                    title="재고 소진 예상일" 
+                    value={statistics?.remainDate ?? 0} 
                     color={COLORS.primary} 
                 />
             </Col>
