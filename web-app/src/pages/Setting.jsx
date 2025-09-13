@@ -5,6 +5,7 @@ import { useUserDonations } from '../hooks/useUserDonations';
 import { EmptyState } from "../components/common/EmptyState.jsx";
 import { AddDialog } from '../components/dialogs/AddDialog.jsx';
 import WishList from '../components/setting/WishList.jsx';
+import RoomIcon from '@mui/icons-material/Room';
 
 export default function Setting() {
     const { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete } = useUserDonations();
@@ -16,7 +17,10 @@ export default function Setting() {
         return (
             <Box p={2} display='flex' flexDirection='column' justifyContent='space-between' minHeight='100%'>
             <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px' }}>
-                <Typography variant='subtitle1' sx={{ fontWeight: 'bold'}}>내가 보유한 물품 현황</Typography>
+                {/* TODO: 주소 변경 적용 */}
+                <RoomIcon />
+                <Typography>대구광역시 북구 산격동 123-12</Typography>
+                <Typography variant='subtitle1'>내가 보유한 물품 현황</Typography>
                 <Typography variant='body2'>보유 중인 구호품을 확인할 수 있습니다</Typography>
             </Box>
 
@@ -48,6 +52,11 @@ export default function Setting() {
     return (
         <Box p={2}>
             <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {/* TODO: 주소 변경 적용 */}
+                    <RoomIcon sx={{ fontSize: 10, color: '#666666' }} />
+                    <Typography sx={{ fontSize: 10, color: '#666666'}}>대구광역시 북구 산격동 123-12</Typography>
+                </Box>
                 <Typography variant='subtitle1' sx={{ fontWeight: 'bold'}}>내가 보유한 물품 현황</Typography>
                 <Typography variant='body2'>보유 중인 구호품을 확인할 수 있습니다</Typography>
             </Box>
