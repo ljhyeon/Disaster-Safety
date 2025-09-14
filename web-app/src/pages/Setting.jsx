@@ -11,15 +11,20 @@ export default function Setting() {
     const { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete } = useUserDonations();
     const [open, setOpen] = useState(false); // 기부 물품 Dialog
 
+    // dummy
+    const road_address = '대구광역시 북구 산격동 123-12';
+    const address_detail = '';
+
     if (loading) return <LoadingState message='희망 기부 물품을 불러오는 중...' />;
 
     if (donations.length === 0) {
         return (
             <Box p={2} display='flex' flexDirection='column' justifyContent='space-between' minHeight='100%'>
             <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px' }}>
-                {/* TODO: 주소 변경 적용 */}
-                <RoomIcon />
-                <Typography>대구광역시 북구 산격동 123-12</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <RoomIcon sx={{ fontSize: 10, color: '#666666' }} />
+                    <Typography sx={{ fontSize: 10, color: '#666666'}}>{road_address} {address_detail}</Typography>  {/* 대구광역시 북구 산격동 123-12 */}
+                </Box>
                 <Typography variant='subtitle1'>내가 보유한 물품 현황</Typography>
                 <Typography variant='body2'>보유 중인 구호품을 확인할 수 있습니다</Typography>
             </Box>
@@ -53,9 +58,8 @@ export default function Setting() {
         <Box p={2}>
             <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {/* TODO: 주소 변경 적용 */}
                     <RoomIcon sx={{ fontSize: 10, color: '#666666' }} />
-                    <Typography sx={{ fontSize: 10, color: '#666666'}}>대구광역시 북구 산격동 123-12</Typography>
+                    <Typography sx={{ fontSize: 10, color: '#666666'}}>{road_address} {address_detail}</Typography>  {/* 대구광역시 북구 산격동 123-12 */}
                 </Box>
                 <Typography variant='subtitle1' sx={{ fontWeight: 'bold'}}>내가 보유한 물품 현황</Typography>
                 <Typography variant='body2'>보유 중인 구호품을 확인할 수 있습니다</Typography>
