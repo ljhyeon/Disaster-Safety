@@ -1,103 +1,20 @@
-import React, { useState } from 'react';
-import { Table, Tag, Button, Typography, Space, Select, Input } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Table, Tag, Button, Typography, Space, Select, Input, Modal } from 'antd';
 
 const { Title } = Typography;
-const { Option } = Select;
+
+import { Modify } from '../components/modals/Modify';
+import { managingData } from '../dummydata/managingData';
 
 const ReliefSuppliesManagement = () => {
     // 더미 데이터
-    const [data, setData] = useState([
-        {
-        key: '1',
-        suppliesName: '임화용 봄내',
-        urgencyLevel: '높음',
-        currentQuantity: 120,
-        expectedQuantity: 400,
-        deficitQuantity: 3,
-        fulfillmentRate: '80%',
-        checkStatus: '미검수',
-        receiveStatus: '일치'
-        },
-        {
-        key: '2',
-        suppliesName: '임화용 봄내',
-        urgencyLevel: '높음',
-        currentQuantity: 120,
-        expectedQuantity: 400,
-        deficitQuantity: 3,
-        fulfillmentRate: '80%',
-        checkStatus: '미검수',
-        receiveStatus: '일치'
-        },
-        {
-        key: '3',
-        suppliesName: '임화용 봄내',
-        urgencyLevel: '높음',
-        currentQuantity: 120,
-        expectedQuantity: 400,
-        deficitQuantity: 3,
-        fulfillmentRate: '80%',
-        checkStatus: '미검수',
-        receiveStatus: '일치'
-        },
-        {
-        key: '4',
-        suppliesName: '임화용 봄내',
-        urgencyLevel: '높음',
-        currentQuantity: 120,
-        expectedQuantity: 400,
-        deficitQuantity: 3,
-        fulfillmentRate: '80%',
-        checkStatus: '미검수',
-        receiveStatus: '일치'
-        },
-        {
-        key: '5',
-        suppliesName: '임화용 봄내',
-        urgencyLevel: '높음',
-        currentQuantity: 120,
-        expectedQuantity: 400,
-        deficitQuantity: 3,
-        fulfillmentRate: '80%',
-        checkStatus: '미검수',
-        receiveStatus: '일치'
-        },
-        {
-        key: '6',
-        suppliesName: '생수',
-        urgencyLevel: '중간',
-        currentQuantity: 500,
-        expectedQuantity: 800,
-        deficitQuantity: 0,
-        fulfillmentRate: '95%',
-        checkStatus: '검수완료',
-        receiveStatus: '일치'
-        },
-        {
-        key: '7',
-        suppliesName: '담요',
-        urgencyLevel: '낮음',
-        currentQuantity: 200,
-        expectedQuantity: 300,
-        deficitQuantity: 5,
-        fulfillmentRate: '67%',
-        checkStatus: '검수완료',
-        receiveStatus: '불일치'
-        }
-    ]);
+    const [data, setData] = useState(managingData);
 
     // 통계 계산
     const totalCount = data.length;
     const unInspectedCount = data.filter(d => d.checkStatus === '미검수').length;
     const inspectedCount = data.filter(d => d.checkStatus === '검수완료').length;
     const mismatchCount = data.filter(d => d.receiveStatus === '불일치').length;
-
-    // 상세보기 핸들러
-    const handleViewDetails = (record) => {
-        console.log('상세보기:', record);
-        // 실제로는 상세보기 모달이나 페이지로 이동
-    };
 
     // 긴급도 태그 색상
     const getUrgencyColor = (level) => {
@@ -118,79 +35,93 @@ const ReliefSuppliesManagement = () => {
 
     const columns = [
         {
-        title: '구호품',
-        dataIndex: 'suppliesName',
-        key: 'suppliesName',
-        width: 150,
+            title: '구호품',
+            dataIndex: 'suppliesName',
+            key: 'suppliesName',
+            width: 150,
         },
         {
-        title: '긴급도',
-        dataIndex: 'urgencyLevel',
-        key: 'urgencyLevel',
-        width: 100,
-        render: (level) => (
-            <Tag color={getUrgencyColor(level)} style={{ borderRadius: 12, color: getUrgencyFontColor(level), }}
-            >
-            {level}
-            </Tag>
-        ),
+            title: '긴급도',
+            dataIndex: 'urgencyLevel',
+            key: 'urgencyLevel',
+            width: 100,
+            render: (level) => (
+                <Tag color={getUrgencyColor(level)} style={{ borderRadius: 12, color: getUrgencyFontColor(level), }}
+                >
+                {level}
+                </Tag>
+            ),
         },
         {
-        title: '현재 수량',
-        dataIndex: 'currentQuantity',
-        key: 'currentQuantity',
-        width: 120,
-        render: (quantity) => `${quantity}개`,
+            title: '현재 수량',
+            dataIndex: 'currentQuantity',
+            key: 'currentQuantity',
+            width: 120,
+            render: (quantity) => `${quantity}개`,
         },
         {
-        title: '예상 필요 수량',
-        dataIndex: 'expectedQuantity',
-        key: 'expectedQuantity',
-        width: 140,
-        render: (quantity) => `${quantity}개`,
+            title: '예상 필요 수량',
+            dataIndex: 'expectedQuantity',
+            key: 'expectedQuantity',
+            width: 140,
+            render: (quantity) => `${quantity}개`,
         },
         {
-        title: '부족 수량',
-        dataIndex: 'deficitQuantity',
-        key: 'deficitQuantity',
-        width: 120,
-        render: (quantity) => `${quantity}개`,
+            title: '부족 수량',
+            dataIndex: 'deficitQuantity',
+            key: 'deficitQuantity',
+            width: 120,
+            render: (quantity) => `${quantity}개`,
         },
         {
-        title: '충족률',
-        dataIndex: 'fulfillmentRate',
-        key: 'fulfillmentRate',
-        width: 100,
-        render: (rate) => (
-            <span style={{ 
-            color: parseInt(rate) >= 80 ? '#66BB6A' : '#FF6B6B',
-            fontWeight: 600
-            }}>
-            {rate}
-            </span>
-        ),
+            title: '충족률',
+            dataIndex: 'fulfillmentRate',
+            key: 'fulfillmentRate',
+            width: 100,
+            render: (rate) => (
+                <span style={{ 
+                    color: parseInt(rate) >= 80 ? '#66BB6A' : '#FF6B6B',
+                    fontWeight: 600
+                }}>
+                {rate}
+                </span>
+            ),
         },
         {
-        title: '작업',
-        key: 'action',
-        width: 120,
-        render: (_, record) => (
-            <Button
-            type="primary"
-            size="small"
-            onClick={() => handleViewDetails(record)}
-            style={{
-                borderRadius: 6,
-                fontSize: '12px',
-                height: 28
-            }}
-            >
-            상세보기
-            </Button>
-        ),
+            title: '작업',
+            key: 'action',
+            width: 120,
+            render: (_, record) => (
+                <Button
+                type="primary"
+                size="small"
+                onClick={() => openModal(record)}
+                style={{
+                    borderRadius: 6,
+                    fontSize: '12px',
+                    height: 28
+                }}
+                >
+                    수정하기
+                </Button>
+            ),
         },
     ];
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    const openModal = (record) => {
+        console.log(record)
+        setSelectedItem(record);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedItem(null);
+    };
+    
     return (
         <>
             <Title level={1}>현재 구호품 재고 관리</Title>
@@ -260,6 +191,16 @@ const ReliefSuppliesManagement = () => {
                 rowClassName={(record, index) => 
                     index % 2 === 0 ? 'table-row-light' : 'table-row-dark'
                 }
+            />
+
+            <Modify
+                isModalOpen={isModalOpen}
+                closeModal={closeModal}
+                selectedItem={selectedItem}
+                handleSubmit={()=>{
+                    // 추가 제출 로직 필요
+                    closeModal();
+                }}
             />
         </>
     );

@@ -1,14 +1,18 @@
+// 배송 ID(deliveryId), 공급자, 수량산태 확인 불가
+// matched_quantity가 여기서 뜻하는 품목 수	가 맞는지 확인 필요
+  // checking 모달에서도 수정 필요
+
 export const shippingData = [
     {
         key: '1',
-        trackingNumber: '1234567890123',
+        tracking_number: '1234567890123',
         deliveryId: 'DEL-2024-001',
-        deliveryDate: '2024.01.15',
+        delivery_completed_at: '2024.01.15',
         supplier: '대한적십자사',
         status: '배송완료',
-        quantity: 3,
+        matched_quantity: 3,
         receiveStatus: '불일치',
-        checkStatus: '미검수',
+        // checkStatus: '미검수',
         items: [
             { name: '생수 500ml', expected: 60 },
             { name: '일회용 부대', expected: 30 },
@@ -17,14 +21,14 @@ export const shippingData = [
     },
     {
         key: '2',
-        trackingNumber: '2345678901234',
+        tracking_number: '2345678901234',
         deliveryId: 'DEL-2024-002',
-        deliveryDate: '2024.01.16',
+        delivery_completed_at: '2024.01.16',
         supplier: '굿네이버스',
         status: '배송완료',
-        quantity: 2,
+        matched_quantity: 2,
         receiveStatus: '일치',
-        checkStatus: '검수완료',
+        // checkStatus: '검수완료',
         items: [
             { name: '담요', expected: 50 },
             { name: '구급약품 세트', expected: 25 }
@@ -32,14 +36,14 @@ export const shippingData = [
     },
     {
         key: '3',
-        trackingNumber: '3456789012345',
+        tracking_number: '3456789012345',
         deliveryId: 'DEL-2024-003',
         deliveryDate: '2024.01.17',
         supplier: '월드비전',
         status: '배송완료',
-        quantity: 4,
+        matched_quantity: 4,
         receiveStatus: '불일치',
-        checkStatus: '미검수',
+        // checkStatus: '미검수',
         items: [
             { name: '비상식량', expected: 100 },
             { name: '손전등', expected: 40 },
@@ -49,14 +53,14 @@ export const shippingData = [
     },
     {
         key: '4',
-        trackingNumber: '4567890123456',
+        tracking_number: '4567890123456',
         deliveryId: 'DEL-2024-004',
-        deliveryDate: '2024.01.18',
+        delivery_completed_at: '2024.01.18',
         supplier: '유니세프',
         status: '대기중',
-        quantity: 1,
+        matched_quantity: 1,
         receiveStatus: '일치',
-        checkStatus: '미검수',
+        // checkStatus: '미검수',
         items: [
             { name: '응급처치 키트', expected: 30 }
         ]

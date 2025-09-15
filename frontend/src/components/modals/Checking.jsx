@@ -58,7 +58,7 @@ export const Checking = ({ isModalOpen, closeModal, selectedDelivery, inspection
                             </Col>
                             <Col span={12}>
                                 <Text type="secondary">총 품목 수: </Text>
-                                <Text strong>{selectedDelivery.quantity}개</Text>
+                                <Text strong>{selectedDelivery.matched_quantity}개</Text>
                             </Col>
                         </Row>
                     </div>
@@ -159,7 +159,8 @@ export const Checking = ({ isModalOpen, closeModal, selectedDelivery, inspection
                             marginTop: '16px',
                             fontSize: '13px',
                             backgroundColor: '#f6ffed',
-                            border: '1px solid #b7eb8f'
+                            border: '1px solid #b7eb8f',
+                            color: '#52C41A'
                         }}
                     />
                 </>
