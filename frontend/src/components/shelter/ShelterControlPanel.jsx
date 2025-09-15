@@ -60,10 +60,12 @@ export const ShelterControlPanel = ({ shelters }) => {
                             style={{ backgroundColor: '#2563EB' }}
                         />
                         <div>
+                            {/* TOOD: 로그인한 사용자 정보에 맞게 변경 (근데 과와 직책은 어떻게 알지요) */}
                             <div style={{ fontSize: '14px', fontWeight: 600 }}>윤주혁 주무관</div>
                             <div style={{ fontSize: '12px', color: '#888' }}>안전재난과</div>
                         </div>
                     </div>
+                    {/* TODO: 로그아웃 기능 구현 */}
                     <Button type="text" style={{ color: 'red', fontWeight: 600 }}>LOGOUT</Button>
                 </div>
 
@@ -110,7 +112,6 @@ export const ShelterControlPanel = ({ shelters }) => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                {/* <MapPin size={12} color='#3B82F6' /> */}
                                                 <EnvironmentFilled style={{ color: '#3B82F6' }} />
                                                 <span style={{ fontWeight: 600 }}>{item.shelter_name}</span>
                                             </div>
@@ -118,6 +119,7 @@ export const ShelterControlPanel = ({ shelters }) => {
                                                 {item.distance}km
                                             </Tag>
                                         </div>
+                                        {/* TOOO: 기능 미구현 */}
                                         <Button type="link" size="small" style={{ color: '#3B82F6', padding: 0 }}>
                                             지도에서 보기
                                         </Button>

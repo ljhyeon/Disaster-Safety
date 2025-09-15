@@ -5,7 +5,7 @@ const { Title, Text } = Typography
 
 import { COLORS } from '../styles/colors'
 
-const DonutChart = ({ title, value, color = COLORS.primary }) => {
+const DonutChart = ({ title, value, color = COLORS.primary, unit='%' }) => {
   const data = [
     { type: '사용', value },
     { type: '남은 비율', value: 100 - value },
@@ -52,7 +52,7 @@ const DonutChart = ({ title, value, color = COLORS.primary }) => {
         }}
       >
         <Text style={{ marginTop: 12 }}>{title}</Text>
-        <Title level={3} style={{ marginTop: 12 }}>{value}%</Title>
+        <Title level={3} style={{ marginTop: 12 }}>{value}{unit}</Title>
       </div>
     </div>
   )
