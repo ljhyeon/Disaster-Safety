@@ -1,28 +1,15 @@
-import { useState } from 'react';
-import { Progress, Typography, Row, Col, Tag, Modal, Table, Divider } from 'antd';
-import { REQUEST_TABLE_COLUMNS } from '../constants/requestColumns';
+import { Progress, Typography, Row, Col } from 'antd';
 import { getStatusConfig } from '../utils/requestStatus';
 import '../styles/requestCard.css'
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const RequestCard = ({ data }) => {
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
   const statusConfig = getStatusConfig(data.status, data.progress);
-
-  // 모달 열기/닫기
-  const showModal = () => {
-    setIsModalVisible(true);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
 
   return (
     <>
-      <div className="request-card" onClick={showModal} style={{ cursor: 'pointer' }}>
+      <div className="request-card" style={{ cursor: 'default' }}>
         <div className="content">
           <Row gutter={16} align="middle">
             <Col span={12}>
@@ -59,53 +46,6 @@ const RequestCard = ({ data }) => {
           </Row>
         </div>
       </div>
-
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Title level={4} style={{ margin: 0 }}>구호품 배송 상세 현황</Title>
-            <Tag color={statusConfig.tagColor}>{statusConfig.text}</Tag>
-          </div>
-        }
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        width={800}
-      >
-        <Divider />
-        <div style={{ marginBottom: '16px' }}>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Text type="secondary">요청 ID</Text>
-              <br />
-              <Text strong>{data.id}</Text>
-            </Col>
-            <Col span={8}>
-              <Text type="secondary">요청일시</Text>
-              <br />
-              <Text>{data.requestDate}</Text>
-            </Col>
-            <Col span={8}>
-              <Text type="secondary">전체 배송률</Text>
-              <br />
-              <Text style={{ color: statusConfig.color, fontWeight: 'bold', fontSize: '16px' }}>
-                {data.progress}%
-              </Text>
-            </Col>
-          </Row>
-        </div>
-        
-        <Divider />
-        
-        <Title level={5}>구호품 항목별 배송 현황</Title>
-        <Table
-          columns={REQUEST_TABLE_COLUMNS}
-          dataSource={data.supplyDetails || []}
-          rowKey={(record) => `${record.category}-${record.item}`}
-          pagination={false}
-          size="small"
-        />
-      </Modal>
     </>
   );
 };
