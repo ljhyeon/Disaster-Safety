@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Box, Typography, Stack, FormControlLabel, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Checkbox } from '@mui/material';
+import { updateUser as updateUserInFirestore } from '../../services/userService';
+import { useAuthStore } from '../../store/authStore';
+import { FIREBASE_USER_FIELDS } from '../../constants/firebaseFields';
 
 export function AddressDialog({ open, onClose, onSubmit }) {
     const [formData, setFormData] = useState({
@@ -12,6 +15,8 @@ export function AddressDialog({ open, onClose, onSubmit }) {
     });
 
     const [errors, setErrors] = useState({}); // 유효성 에러 상태
+
+    const { user, updateUser } = useAuthStore();
 
     const handleInputChange = (field) => (e) => {
         setFormData(prev => ({
@@ -49,7 +54,7 @@ export function AddressDialog({ open, onClose, onSubmit }) {
         }).open();
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const newErrors = {};
 
         if (!formData.userName.trim()) newErrors.userName = '사용자명을 입력해주세요.';
@@ -64,8 +69,33 @@ export function AddressDialog({ open, onClose, onSubmit }) {
             return;
         }
 
-        onSubmit(formData);
-        handleClose();
+        // Firestore에 저장
+        if (!user || !user.email) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        const updateData = {
+            [FIREBASE_USER_FIELDS.NAME]: formData.userName,
+            [FIREBASE_USER_FIELDS.PHONE_NUMBER]: formData.contact,
+            [FIREBASE_USER_FIELDS.ZIPCODE]: formData.postalCode,
+            [FIREBASE_USER_FIELDS.ROAD_ADDRESS]: formData.roadAddress,
+            [FIREBASE_USER_FIELDS.ADDRESS_DETAIL]: formData.detailAddress,
+        };
+
+        // console.log('Saving user data:', updateData);
+        const result = await updateUserInFirestore(user.email, updateData);
+        // console.log('Firestore update result:', result);
+        
+        if (result.success) {
+            // Zustand에 업데이트 (Firestore 필드명 사용)
+            // console.log('Updating Zustand with:', updateData);
+            updateUser(updateData);
+            onSubmit(formData);
+            handleClose();
+        } else {
+            alert('정보 저장에 실패했습니다.');
+        }
     };
 
     const handleClose = () => {

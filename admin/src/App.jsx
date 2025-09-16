@@ -16,7 +16,9 @@ import MainLayout from './components/layouts/MainLayout'
 import { useAuthStore } from './store/authStore'
 
 function App() {
-  const { initializeAuth, isLoading, isAuthenticated } = useAuthStore()
+  const initializeAuth = useAuthStore(state => state.initializeAuth)
+  const isLoading = useAuthStore(state => state.isLoading)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
 
   useEffect(() => {
     // Firebase 인증 상태 초기화

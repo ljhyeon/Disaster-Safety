@@ -6,14 +6,16 @@ import { EmptyState } from "../components/common/EmptyState.jsx";
 import { AddDialog } from '../components/dialogs/AddDialog.jsx';
 import WishList from '../components/setting/WishList.jsx';
 import RoomIcon from '@mui/icons-material/Room';
+import { useAuthStore } from '../store/authStore';
 
 export default function Setting() {
     const { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete } = useUserDonations();
     const [open, setOpen] = useState(false); // 기부 물품 Dialog
+    const { user } = useAuthStore();
 
-    // dummy
-    const road_address = '대구광역시 북구 산격동 123-12';
-    const address_detail = '';
+    // user에서 주소 정보 가져오기
+    const road_address = user?.road_address || '주소 정보가 없습니다';
+    const address_detail = user?.address_detail || '';
 
     if (loading) return <LoadingState message='희망 기부 물품을 불러오는 중...' />;
 
