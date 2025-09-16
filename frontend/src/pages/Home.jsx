@@ -33,8 +33,7 @@ const Home = () => {
         <Layout style={{ minHeight: '100vh', width: '100vw', backgroundColor: "white" }}>
             {/* 상단 컨트롤 바 */}
             <ShelterControlPanel 
-                shelterCount={shelters.length}
-                onRegisterClick={() => navigate('/shelter-register')}
+                shelters={shelters || []}
             />
 
             <ShelterMap 

@@ -24,6 +24,10 @@ export const ShelterInfoCard = ({ shelter }) => (
             <span>재난 유형:</span>
             <span><strong>{shelter.disaster_type}</strong></span>
         </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span>재고 소진 예상일:</span>
+            <span><strong>{shelter.done_date}</strong></span>
+        </div>
     </Card>
 );
 

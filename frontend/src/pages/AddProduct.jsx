@@ -314,8 +314,6 @@ const AddProduct = () => {
                     ))}
                 </div>
 
-                <Divider orientation="left">유사 사례 기반 추천</Divider>
-                
                 <div>
                     <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>
                         현재 대피소와 유사한 과거 재난 사례 분석 결과

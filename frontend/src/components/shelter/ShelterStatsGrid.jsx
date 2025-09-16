@@ -12,12 +12,12 @@ export const ShelterStatsGrid = ({ shelter, statistics, reliefSupplyRate }) => {
                 <DonutChart title="구호품 공급률" value={reliefSupplyRate} color={COLORS.primaryHover} />
             </Col>
             <Col xs={24} sm={12} md={8}>
+                {/* TODO: 재고 소진 예상일 을 위한 정보 별도 필요 */}
                 <DonutChart 
-                    title="대기 요청률" 
-                    value={statistics?.total_requests > 0 
-                        ? Math.round(((statistics?.pending_requests || 0) / statistics.total_requests) * 100)
-                        : 0} 
+                    title="재고 소진 예상일" 
+                    value={statistics?.remainDate ?? 0} 
                     color={COLORS.primary} 
+                    unit='일'
                 />
             </Col>
         </Row>

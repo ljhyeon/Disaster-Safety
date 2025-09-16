@@ -46,6 +46,11 @@ const Main = () => {
         )
     }
 
+    const dummyItems = [
+        { name: '일회용 붕대', percent: 13 },
+        { name: '컵라면', percent: 17  },
+    ]
+
     return (
         <>
             <Title level={1}>
@@ -65,7 +70,7 @@ const Main = () => {
                     <ShelterInfoCard shelter={shelter} />
                 </Col>
                 <Col xs={24} md={12}>
-                    <ReliefInfoCard statistics={statistics} reliefSupplyRate={reliefSupplyRate} />
+                    <ReliefInfoCard items={dummyItems ?? []} />
                 </Col>
             </Row>
 

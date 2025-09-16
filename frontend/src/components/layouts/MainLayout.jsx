@@ -2,7 +2,7 @@
 // components/layouts/MainLayout.jsx
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Layout, Menu, Button, Typography } from 'antd'
-import { DashboardOutlined, WarningOutlined, UserOutlined, HomeOutlined } from '@ant-design/icons'
+import { HomeFilled, WarningOutlined, UserOutlined, HomeOutlined, UnorderedListOutlined, SettingFilled } from '@ant-design/icons'
 import { useShelterStore } from '../../store/useShelterStore'
 // import { useAuthStore } from '../../store/authStore'
 import { COLORS } from '../../styles/colors'
@@ -64,7 +64,7 @@ export default function MainLayout() {
             >
                 <div
                     className="logo"
-                    style={{ height: 32, margin: 16, color: COLORS.gray2, fontSize: '24px', textAlign: 'center', cursor: 'pointer', }}
+                    style={{ height: 32, margin: 16, color: COLORS.gray2, fontSize: '24px', cursor: 'pointer', }}
                     onClick={()=>{
                         navigate('/home')
                         setName('')
@@ -80,17 +80,29 @@ export default function MainLayout() {
                     items={[
                         {
                             key: 'main',
-                            icon: <DashboardOutlined />,
+                            icon: <HomeFilled />,
                             label: 'Main',
                         },
                         {
                             key: 'list',
-                            icon: <WarningOutlined />,
+                            icon: <UnorderedListOutlined />,
                             label: '필요 구호품 등록',
+                        },
+
+                        {
+                            key: 'manage',
+                            icon: <img src="/boxes.svg" alt="재고 관리" style={{ width: 16, height: 16 }} />,
+                            label: '재고 관리',
+                        },
+
+                        {
+                            key: 'check',
+                            icon: <img src="/car.svg" alt="재고 관리" style={{ width: 16, height: 16 }} />,
+                            label: '배송 검수',
                         },
                         {
                             key: 'setting',
-                            icon: <UserOutlined />,
+                            icon: <SettingFilled />,
                             label: '설정',
                         }
                     ]}
