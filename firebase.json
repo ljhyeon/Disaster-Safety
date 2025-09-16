@@ -1,14 +1,14 @@
 {
   "hosting": [
     {
-      "target": "frontend",
-      "public": "frontend/dist",
+      "target": "admin",
+      "public": "admin/dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [ { "source": "**", "destination": "/index.html" } ]
     },
     {
-      "target": "web-app",
-      "public": "web-app/dist",
+      "target": "user",
+      "public": "user/dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [ { "source": "**", "destination": "/index.html" } ]
     }

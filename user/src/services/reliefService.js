@@ -1,4 +1,4 @@
-// 구호품 관리 서비스 (web-app용)
+// 구호품 관리 서비스 (user용)
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, limit, getDoc } from 'firebase/firestore';
 import { db } from './firebase/config';
 import { RELIEF_CATEGORIES, RELIEF_SUBCATEGORIES, RELIEF_PRIORITY, RELIEF_UNITS, RELIEF_REQUEST_STATUS, RELIEF_SUPPLY_STATUS } from '../constants/reliefConstants';

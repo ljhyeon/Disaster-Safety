@@ -1,11 +1,11 @@
-# Frontend
+# Admin
 ## 실행 방법
 ```
 # pnpm 설치 (최초 1회)
 npm install -g pnpm
 
 # 프로젝트 디렉토리 이동
-cd frontend
+cd admin
 
 # 패키지 설치
 pnpm install
@@ -26,7 +26,7 @@ PNPM – 빠르고 효율적인 패키지 매니저
 
 ## 디렉토리 구조
 ```
-frontend/my-app/
+admin/my-app/
 ├── api/            # 백엔드 API와의 통신 모듈
 ├── components/     # 재사용 가능한 UI 및 레이아웃 컴포넌트
 ├── pages/          # 라우팅되는 페이지 컴포넌트

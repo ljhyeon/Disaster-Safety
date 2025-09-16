@@ -1,4 +1,4 @@
-# 🚨 Disaster Safety - Web Application (사용자 화면)
+# 🚨 Disaster Safety - User Application (사용자 화면)
 
 > 재해 상황에서 구호품 요청 및 지원을 위한 React 기반 웹 애플리케이션
 
@@ -44,7 +44,7 @@
 
 ## 🛠 기술 스택
 
-### Frontend Framework
+### User Framework
 - **React 19.0.0-rc**
 - **Vite 7.0.0**
 - **React Router DOM 7.6.3**
@@ -79,7 +79,7 @@ npm install -g pnpm
 git clone <repository-url>
 
 # 프로젝트 디렉토리 이동
-cd web-app
+cd user
 
 # 의존성 설치
 pnpm install
@@ -108,7 +108,7 @@ pnpm lint
 ## 📁 프로젝트 구조
 
 ```
-web-app/
+user/
 ├── public/                    # 정적 파일
 │   ├── setting.svg           # 설정 아이콘
 │   ├── status.svg            # 상태 아이콘

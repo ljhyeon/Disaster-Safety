@@ -5,8 +5,8 @@
   "targets": {
     "disastersafety-3e0ca": {
       "hosting": {
-        "frontend": ["disastersafety-admin"],
-        "web-app": ["disastersafety-user"]
+        "admin": ["disastersafety-admin"],
+        "user": ["disastersafety-user"]
       }
     }
   }
