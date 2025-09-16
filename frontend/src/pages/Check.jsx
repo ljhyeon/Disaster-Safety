@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Typography, Tag, } from 'antd';
 import { shippingData as initialData } from '../dummydata/shippingData';
-import { ShippingTable } from '../components/tables/shipping';
+import { ShippingTable } from "../components/tables/Shipping";
 import { Checking } from '../components/modals/Checking';
 
 const { Title, } = Typography;

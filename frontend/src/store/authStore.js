@@ -37,12 +37,7 @@ export const useAuthStore = create(
         try {
           const result = await signOutUser();
           if (result.success) {
-            set({ 
-              user: null, 
-              isAuthenticated: false, 
-              isLoading: false,
-              error: null 
-            });
+            get().resetAuth(); // resetAuth 호출하여 상태 초기화 (isLoading은 true 유지)
             return { success: true };
           } else {
             set({ 
@@ -85,7 +80,7 @@ export const useAuthStore = create(
       // 인증 상태 리셋
       resetAuth: () => set({
         user: null,
-        isLoading: false,
+        isLoading: true, // 중요: 로그아웃 중에는 true 유지, onAuthStateChange가 false로 바꿔줌
         isAuthenticated: false,
         error: null
       })
@@ -116,4 +111,4 @@ export const useRequireAuth = () => {
 export const useUser = () => {
   const { user } = useAuthStore();
   return user;
-}; 
+};

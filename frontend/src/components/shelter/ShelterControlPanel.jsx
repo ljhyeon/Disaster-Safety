@@ -1,9 +1,23 @@
 import { useState, useMemo } from 'react';
 import { Button, Space, Avatar, Input, List, Tag, Progress } from 'antd';
 import { UserOutlined, SearchOutlined, QuestionCircleOutlined, EnvironmentFilled, } from '@ant-design/icons';
+import { useAuthStore } from '../../store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 export const ShelterControlPanel = ({ shelters }) => {
     const [query, setQuery] = useState('');
+    const logout = useAuthStore((state) => state.logout);
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        const result = await logout();
+        if (result.success) {
+            navigate('/login', { replace: true });
+        } else {
+            console.error("로그아웃 실패:", result.error.message);
+            alert("로그아웃에 실패했습니다. 다시 시도해주세요.");
+        }
+    };
 
     // 검색 필터
     const filteredShelters = useMemo(() => {
@@ -66,7 +80,7 @@ export const ShelterControlPanel = ({ shelters }) => {
                         </div>
                     </div>
                     {/* TODO: 로그아웃 기능 구현 */}
-                    <Button type="text" style={{ color: 'red', fontWeight: 600 }}>LOGOUT</Button>
+                    <Button type="text" style={{ color: 'red', fontWeight: 600 }} onClick={handleLogout}>LOGOUT</Button>
                 </div>
 
                 {/* 검색창 */}
