@@ -6,8 +6,8 @@ export function Logo() {
             <Typography variant="h4" fontWeight="bold" gutterBottom>
                 이어드림
             </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-                재난상황 내 구호품 중계 플랫폼
+            <Typography variant="subtitle1" color="#6B7280" gutterBottom>
+                재난상황 내 구호품 공적 플랫폼
             </Typography>
         </>
     )

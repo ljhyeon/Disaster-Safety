@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Stack, Typography, Chip, Divider, TextField } from '@mui/material';
-import { LocationOn, Schedule, Flag, Category } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Stack, Typography, Chip, TextField, IconButton, InputAdornment, } from '@mui/material';
+import { Schedule, Flag, Category } from '@mui/icons-material';
 import { formatDate } from '../../utils/formatDate';
-import { getPriorityColor } from '../../utils/mapping';
+import { getPriorityBgColor, getPriorityTxtColor } from '../../utils/mapping';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export function RequestDetailDialog({ open, onClose, onAccept, request, loading = false }) {
     const [supplyQuantity, setSupplyQuantity] = useState('');
@@ -33,72 +34,93 @@ export function RequestDetailDialog({ open, onClose, onAccept, request, loading 
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E0E0E0'}}>
+                <Box sx={{ width: 30 }}>
+                    <IconButton color="inherit" onClick={handleClose}>
+                        <ArrowBackIcon />
+                    </IconButton>
+                </Box>
+
                 <Typography variant="h6" component="div">구호품 요청 상세정보</Typography>
+
+                <Box sx={{ width: 30, display: 'flex', justifyContent: 'flex-end' }} />
             </DialogTitle>
-            <DialogContent>
-                <Stack spacing={3} sx={{ py: 1 }}>
+            <DialogContent sx={{ mt: 3 }}>
+                <Stack spacing={3}>
                     {/* 기본 정보 */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{request.item_name}</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="h6">{request.item_name}</Typography>
                         <Typography variant="h6" color="primary">{request.quantity} {request.unit}</Typography>
                     </Box>
-                    <Divider />
+
+                    {/* 대피소 정보 */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="subtitle1" sx={{ mb: 1 }}>대피소 정보</Typography>
+                        <Box sx={{backgroundColor: "#F9FAFB", borderRadius: '8px', p: '8px' }}>
+                            <Box sx={{display: 'flex', alignItem: 'center', gap: 1, }}>
+                                <img src='building.svg' />
+                                <Typography variant='body1'>{request.shelter.shelter_name}</Typography>
+                            </Box>
+                            <Typography variant='body2' sx={{ ml: '19px', color: '#666666' }}>{request.shelter.location}</Typography>
+                        </Box>
+                    </Box>
 
                     {/* 요청 상세 */}
                     <Box>
-                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>요청 상세</Typography>
+                        <Typography variant="subtitle1" sx={{ mb: 1 }}>요청 상세</Typography>
                         <Stack spacing={2}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Category fontSize="small" color="action" />
-                                <Typography variant="body2">카테고리: {request.category} &gt; {request.subcategory}</Typography>
+                                <Typography variant="body2" color='#444444'>{request.category} &gt; {request.subcategory}</Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Flag fontSize="small" color="action" />
-                                <Typography variant="body2">우선순위:</Typography>
-                                <Chip label={request.priority} color={getPriorityColor(request.priority)} size="small" />
+                                <Chip
+                                    label={request.priority}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: getPriorityBgColor(request.priority),
+                                        color: getPriorityTxtColor(request.priority),
+                                    }}
+                                />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Schedule fontSize="small" color="action" />
-                                <Typography variant="body2">요청일: {formatDate(request.created_at)}</Typography>
+                                <Typography variant="body2" color='#444444'>{formatDate(request.created_at)}</Typography>
                             </Box>
                         </Stack>
                     </Box>
 
                     {/* 추가 메모 */}
                     {request.notes && (
-                        <>
-                            <Divider />
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>추가 메모</Typography>
-                                <Typography variant="body2" color="text.secondary">{request.notes}</Typography>
+                        <Box>
+                            <Typography variant="subtitle1" sx={{ mb: 1 }}>추가 메모</Typography>
+                            <Box sx={{backgroundColor: "#F9FAFB", borderRadius: '8px', p: '8px' }}>
+                                <Typography variant="body2" color="#666666">{request.notes}</Typography>
                             </Box>
-                        </>
-                    )}
-
-                    {/* 다중 구호품 목록 */}
-                    {request.relief_items && request.relief_items.length > 1 && (
-                        <>
-                            <Divider />
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>전체 요청 목록 ({request.total_items}개)</Typography>
-                                <Stack spacing={1}>
-                                    {request.relief_items.map((item, idx) => (
-                                        <Box key={idx} sx={{ p: 1, bgcolor: 'grey.50', borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography variant="body2">{item.item_name}</Typography>
-                                            <Typography variant="body2" color="text.secondary">{item.quantity} {item.unit}</Typography>
-                                        </Box>
-                                    ))}
-                                </Stack>
-                            </Box>
-                        </>
+                        </Box>
                     )}
 
                     {/* 배송 수량 입력 */}
-                    <Divider />
                     <Box>
-                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>배송할 수량</Typography>
-                        <TextField label="배송 수량" value={supplyQuantity} onChange={(e) => handleQuantityChange(e.target.value)} fullWidth type="number" inputProps={{ min: 1 }} error={!!error} helperText={error || `단위: ${request.unit}`} placeholder={`최대 ${request.quantity} ${request.unit}`} />
+                        <Typography variant="subtitle1" sx={{ mb: 1 }}>배송할 수량 입력</Typography>
+                        <TextField
+                            value={supplyQuantity}
+                            onChange={(e) => handleQuantityChange(e.target.value)}
+                            fullWidth
+                            type="number"
+                            inputProps={{ min: 1 }}
+                            error={!!error}
+                            helperText={error || ""}
+                            placeholder={`배송 수량 입력`}
+                            InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    {request.unit}
+                                </InputAdornment>
+                            ),
+                            }}
+                        />
                     </Box>
                 </Stack>
             </DialogContent>
