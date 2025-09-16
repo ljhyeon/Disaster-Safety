@@ -4,7 +4,7 @@ import { UserOutlined, SearchOutlined, QuestionCircleOutlined, EnvironmentFilled
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
-export const ShelterControlPanel = ({ shelters }) => {
+export const ShelterControlPanel = ({ shelters, onFocusShelter }) => {
     const [query, setQuery] = useState('');
     const logout = useAuthStore((state) => state.logout);
     const navigate = useNavigate();
@@ -134,7 +134,7 @@ export const ShelterControlPanel = ({ shelters }) => {
                                             </Tag>
                                         </div>
                                         {/* TOOO: 기능 미구현 */}
-                                        <Button type="link" size="small" style={{ color: '#3B82F6', padding: 0 }}>
+                                        <Button type="link" size="small" style={{ color: '#3B82F6', padding: 0 }} onClick={() => onFocusShelter(item)}>
                                             지도에서 보기
                                         </Button>
                                     </div>

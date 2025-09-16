@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom'
 import { Layout, } from 'antd';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -14,11 +14,19 @@ const Home = () => {
 
     const { shelters, isLoading, } = useShelters();
 
+    const [focusShelter, setFocusShelter] = useState(null);
+
     const handleShelterSelect = useCallback((shelterId, name) => {
         setSelectedId(shelterId);
         setName(name);
         navigate(`/main/${shelterId}`);
     }, [setSelectedId, setName, navigate]);
+
+    // wrapper: 같은 대피소 클릭해도 업데이트 되도록 timestamp 추가
+    const handleFocusShelter = useCallback((shelter) => {
+        if (!shelter) return;
+        setFocusShelter({ ...shelter, _focusAt: Date.now() });
+    }, []);
 
     // 로딩 중일 때 표시
     if (isLoading) {
@@ -34,11 +42,13 @@ const Home = () => {
             {/* 상단 컨트롤 바 */}
             <ShelterControlPanel 
                 shelters={shelters || []}
+                onFocusShelter={handleFocusShelter}
             />
 
             <ShelterMap 
                 shelters={shelters}
                 onShelterSelect={handleShelterSelect}
+                focusShelter={focusShelter}
             />
         </Layout>
     )
