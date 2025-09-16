@@ -6,11 +6,12 @@ import {
 import { auth } from './firebase/config';
 import { createUser, getUser } from './userService';
 import { AUTH_ERROR_MESSAGES } from '../constants/authConstants';
+import { FIREBASE_USER_FIELDS } from '../constants/firebaseFields';
 
 // 사용자 데이터 검증
 const validateUserData = (userData) => {
-  const { uid, email, displayName, userType, termsAgreed } = userData;
-  if (!uid || !email || !displayName || !userType || typeof termsAgreed !== 'boolean') throw new Error('필수 필드가 누락되었습니다.');
+  const { uid, email, displayName, userType } = userData;
+  if (!uid || !email || !displayName || !userType) throw new Error('필수 필드가 누락되었습니다.');
   return true;
 };
 
@@ -24,10 +25,10 @@ const createFirebaseUser = async (email, password, displayName) => {
 
 // Firestore에 사용자 정보 저장
 const saveUserToFirestore = async (user, userData) => {
-  const { userType, termsAgreed, certFile } = userData;
+  const { userType, certFile } = userData;
   const userCreateResult = await createUser({
     uid: user.uid, email: user.email, displayName: user.displayName || userData.displayName,
-    userType, termsAgreed, certFile
+    userType, certFile
   });
   if (!userCreateResult.success) console.error('Firestore 사용자 정보 저장 실패:', userCreateResult.error);
   return userCreateResult;
@@ -36,19 +37,21 @@ const saveUserToFirestore = async (user, userData) => {
 // 사용자 인증 정보 구성
 const buildAuthResult = (user, userData) => ({
   uid: user.uid, email: user.email, displayName: user.displayName, emailVerified: user.emailVerified,
-  userType: userData?.user_type || null, termsAgreed: userData?.terms_agreed || false,
-  createdAt: userData?.created_at || null, updatedAt: userData?.updated_at || null
+  userType: userData?.[FIREBASE_USER_FIELDS.USER_TYPE] || null,
+  name: userData?.[FIREBASE_USER_FIELDS.NAME] || null,
+  createdAt: userData?.[FIREBASE_USER_FIELDS.CREATED_AT] || null,
+  updatedAt: userData?.[FIREBASE_USER_FIELDS.UPDATED_AT] || null
 });
 
 // 에러 코드에 따른 메시지 변환
 const getErrorMessage = (errorCode) => AUTH_ERROR_MESSAGES[errorCode] || '알 수 없는 오류가 발생했습니다.';
 
 // 회원가입 (사용자 정보와 함께)
-export const signUp = async (email, password, displayName = '', userType, termsAgreed = false, certFile = null) => {
+export const signUp = async (email, password, displayName = '', userType, certFile = null) => {
   try {
-    validateUserData({ uid: 'temp', email, displayName, userType, termsAgreed });
+    validateUserData({ uid: 'temp', email, displayName, userType });
     const user = await createFirebaseUser(email, password, displayName);
-    const userCreateResult = await saveUserToFirestore(user, { userType, termsAgreed, certFile, displayName });
+    const userCreateResult = await saveUserToFirestore(user, { userType, certFile, displayName });
     return { success: true, user: buildAuthResult(user, userCreateResult.user) };
   } catch (error) {
     return { success: false, error: { code: error.code, message: getErrorMessage(error.code) } };
@@ -60,17 +63,11 @@ export const signIn = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    const userDataResult = await getUser(user.uid);
-    const userData = userDataResult.success ? userDataResult.user : null;
+  // Firestore에서 이메일 기반으로 사용자 정보 조회
+  const userDataResult = await getUser(user.email);
+  const userData = userDataResult.success ? userDataResult.user : null;
     if (!userDataResult.success) console.warn('Firestore 사용자 정보 조회 실패:', userDataResult.error);
-    return {
-      success: true,
-      user: {
-        uid: user.uid, email: user.email, displayName: user.displayName, emailVerified: user.emailVerified,
-        userType: userData?.user_type || null, termsAgreed: userData?.terms_agreed || false,
-        createdAt: userData?.created_at || null, updatedAt: userData?.updated_at || null
-      }
-    };
+    return { success: true, user: buildAuthResult(user, userData) };
   } catch (error) {
     return { success: false, error: { code: error.code, message: getErrorMessage(error.code) } };
   }

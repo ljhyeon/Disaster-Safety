@@ -21,6 +21,5 @@ export const USER_DATA_SCHEMA = {
   email: 'string',
   displayName: 'string',
   userType: 'string',
-  termsAgreed: 'boolean',
   emailVerified: 'boolean'
 };

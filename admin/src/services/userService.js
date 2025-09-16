@@ -1,48 +1,53 @@
-// 사용자 정보 관리 서비스
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
-// 사용자 타입 상수
-export const USER_TYPES = {
-  PUBLIC_OFFICER: 'public_officer',
-  GENERAL_USER: 'general_user'
-};
+import { FIREBASE_USER_FIELDS, USER_TYPES } from '../constants/firebaseFields';
 
 // 사용자 정보 생성
 export const createUser = async (userData) => {
   try {
-    const { uid, email, displayName, userType, termsAgreed, certFile = null } = userData;
-    
+    const {
+      uid,
+      email,
+      name,
+      userType,
+      phoneNumber = null,
+      zipcode = null,
+      roadAddress = null,
+      addressDetail = null,
+      certificateFile = null,
+      preferredCategories = null
+    } = userData;
+
     // 필수 필드 검증
-    if (!uid || !email || !displayName || !userType || typeof termsAgreed !== 'boolean') {
+    if (!uid || !email || !name || !userType) {
       throw new Error('필수 필드가 누락되었습니다.');
     }
-    
+
     // 사용자 타입 검증
     if (!Object.values(USER_TYPES).includes(userType)) {
       throw new Error('올바르지 않은 사용자 타입입니다.');
     }
-    
-    // 공무원인 경우 인증서 파일 필요 (추후 구현)
-    if (userType === USER_TYPES.PUBLIC_OFFICER && !certFile) {
-      console.warn('공무원 사용자는 인증서 파일이 필요합니다. (추후 구현 예정)');
-    }
-    
+
     // 사용자 문서 생성
     const userDoc = {
-      user_id: uid,
-      email: email,
-      display_name: displayName,
-      user_type: userType,
-      terms_agreed: termsAgreed,
-      cert_file: certFile, // 추후 Storage URL로 변경 예정
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      [FIREBASE_USER_FIELDS.USER_ID]: uid,
+      [FIREBASE_USER_FIELDS.EMAIL]: email,
+      [FIREBASE_USER_FIELDS.USER_TYPE]: userType,
+      [FIREBASE_USER_FIELDS.NAME]: name,
+      [FIREBASE_USER_FIELDS.PHONE_NUMBER]: phoneNumber,
+      [FIREBASE_USER_FIELDS.ZIPCODE]: zipcode,
+      [FIREBASE_USER_FIELDS.ROAD_ADDRESS]: roadAddress,
+      [FIREBASE_USER_FIELDS.ADDRESS_DETAIL]: addressDetail,
+      [FIREBASE_USER_FIELDS.CERTIFICATE_FILE]: certificateFile, // 파일명만 저장
+      [FIREBASE_USER_FIELDS.PREFERRED_CATEGORIES]: preferredCategories,
+      [FIREBASE_USER_FIELDS.CREATED_AT]: new Date().toISOString(),
+      [FIREBASE_USER_FIELDS.UPDATED_AT]: new Date().toISOString(),
+      [FIREBASE_USER_FIELDS.LAST_LOGIN_AT]: new Date().toISOString()
     };
-    
-    // Firestore에 사용자 정보 저장
-    await setDoc(doc(db, 'users', uid), userDoc);
-    
+
+    // Firestore에 사용자 정보 저장 (users/{email} 경로로 저장)
+    await setDoc(doc(db, 'users', email), userDoc);
+
     return {
       success: true,
       user: userDoc
@@ -59,10 +64,10 @@ export const createUser = async (userData) => {
   }
 };
 
-// 사용자 정보 조회
-export const getUser = async (uid) => {
+// 사용자 정보 조회 (users/{email}에서 조회)
+export const getUser = async (email) => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
+    const userDoc = await getDoc(doc(db, 'users', email));
     
     if (userDoc.exists()) {
       return {
@@ -90,15 +95,15 @@ export const getUser = async (uid) => {
   }
 };
 
-// 사용자 정보 업데이트
-export const updateUser = async (uid, updateData) => {
+// 사용자 정보 업데이트 (users/{email} 경로로 업데이트)
+export const updateUser = async (email, updateData) => {
   try {
     const updatedData = {
       ...updateData,
-      updated_at: new Date().toISOString()
+      [FIREBASE_USER_FIELDS.UPDATED_AT]: new Date().toISOString()
     };
     
-    await updateDoc(doc(db, 'users', uid), updatedData);
+    await updateDoc(doc(db, 'users', email), updatedData);
     
     return {
       success: true,
@@ -116,10 +121,10 @@ export const updateUser = async (uid, updateData) => {
   }
 };
 
-// 사용자 정보 삭제
-export const deleteUser = async (uid) => {
+// 사용자 정보 삭제 (users/{email}에서 삭제)
+export const deleteUser = async (email) => {
   try {
-    await deleteDoc(doc(db, 'users', uid));
+    await deleteDoc(doc(db, 'users', email));
     
     return {
       success: true
@@ -139,7 +144,7 @@ export const deleteUser = async (uid) => {
 // 이메일로 사용자 조회
 export const getUserByEmail = async (email) => {
   try {
-    const q = query(collection(db, 'users'), where('email', '==', email));
+    const q = query(collection(db, 'users'), where(FIREBASE_USER_FIELDS.EMAIL, '==', email));
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {
@@ -172,7 +177,7 @@ export const getUserByEmail = async (email) => {
 // 사용자 타입별 조회
 export const getUsersByType = async (userType) => {
   try {
-    const q = query(collection(db, 'users'), where('user_type', '==', userType));
+    const q = query(collection(db, 'users'), where(FIREBASE_USER_FIELDS.USER_TYPE, '==', userType));
     const querySnapshot = await getDocs(q);
     
     const users = [];
@@ -196,10 +201,10 @@ export const getUsersByType = async (userType) => {
   }
 };
 
-// 사용자 존재 여부 확인
-export const checkUserExists = async (uid) => {
+// 사용자 존재 여부 확인 (users/{email}에서 확인)
+export const checkUserExists = async (email) => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
+    const userDoc = await getDoc(doc(db, 'users', email));
     return userDoc.exists();
   } catch (error) {
     console.error('사용자 존재 확인 실패:', error);

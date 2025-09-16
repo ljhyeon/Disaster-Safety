@@ -10,12 +10,12 @@ export default function SignUp() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [displayName, setDisplayName] = useState('');
-    const [termsAgreed, setTermsAgreed] = useState(false);
+    
     const { isLoading, errorMessage, handleSignUp, setErrorMessage } = useAuth();
 
     const onSubmit = () => {
         setErrorMessage('');
-        handleSignUp(email, password, confirmPassword, displayName, termsAgreed);
+        handleSignUp(email, password, confirmPassword, displayName);
     };
 
     return (
@@ -26,7 +26,7 @@ export default function SignUp() {
                 <TextField fullWidth label="아이디" type="email" variant="outlined" margin="normal" value={email} onChange={e => setEmail(e.target.value)} error={Boolean(errorMessage && !email)} disabled={isLoading} />
                 <TextField fullWidth label="비밀번호" type="password" variant="outlined" margin="normal" value={password} onChange={e => setPassword(e.target.value)} error={Boolean(errorMessage && !password)} disabled={isLoading} helperText="6자 이상 입력해주세요" />
                 <TextField fullWidth label="비밀번호 확인" type="password" variant="outlined" margin="normal" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} error={Boolean(errorMessage && !confirmPassword)} disabled={isLoading} onKeyPress={e => { if (e.key === 'Enter') handleSignUp(); }} />
-                <FormControlLabel control={<Checkbox checked={termsAgreed} onChange={e => setTermsAgreed(e.target.checked)} disabled={isLoading} color="primary" />} label={<Typography variant="body2">이용약관 및 개인정보처리방침에 동의합니다. (필수)</Typography>} sx={{ mt: 2, mb: 1 }} />
+                
                 {errorMessage && <Typography variant="body2" color="error" mt={1}>{errorMessage}</Typography>}
                 <Box display="flex" flexDirection="column" justifyContent="space-between" gap={2} mt={2}>
                     <Button fullWidth variant="contained" onClick={() => navigate('/login')} disabled={isLoading}>로그인</Button>
