@@ -307,7 +307,7 @@ const AddProduct = () => {
                                         message.success('추천 아이템이 폼에 설정되었습니다')
                                     }}
                                 >
-                                    폼에 적용
+                                    자동 양식 입력
                                 </Button>
                             </div>
                         </Card>
