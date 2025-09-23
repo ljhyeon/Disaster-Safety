@@ -1,6 +1,6 @@
 // hooks/useUserDonations.js
 import { useState, useEffect } from 'react';
-import { addUserDonationItem, getUserDonationItems, deleteUserDonationItem } from '../services/reliefService';
+import { addUserDonationItem, getUserDonationItems, deleteUserDonationItem, updateUserDonationItem } from '../services/reliefService';
 import { useAuthStore } from '../store/authStore';
 
 export const useUserDonations = () => {
@@ -16,7 +16,8 @@ export const useUserDonations = () => {
     const loadDonations = async () => {
         setLoading(true); setError(null);
         try {
-            const result = await getUserDonationItems(user.uid);
+            const userId = user.user_id || user.uid || user.email;
+            const result = await getUserDonationItems(userId);
             if (result.success) setDonations(result.donations);
             else setError(result.error.message);
         } catch {
@@ -25,16 +26,33 @@ export const useUserDonations = () => {
     };
 
     // 기부 물품 등록
-    const handleSubmit = async (item) => {
+    const handleSubmit = async (itemData) => {
         if (!user) return;
         setSubmitting(true);
         try {
-            const result = await addUserDonationItem(user.uid, { item });
+            // itemData가 문자열이면 객체로 변환 (하위 호환성)
+            const data = typeof itemData === 'string'
+                ? { item: itemData }
+                : itemData;
+
+            const userId = user.user_id || user.uid || user.email;
+            const result = await addUserDonationItem(userId, data);
             if (result.success) { loadDonations(); return { success: true }; }
             else alert(`기부 물품 등록 실패: ${result.error.message}`);
         } catch {
             alert('기부 물품 등록 중 오류가 발생했습니다.');
         } finally { setSubmitting(false); }
+    };
+
+    // 기부 물품 수정
+    const handleUpdate = async (donationId, updateData) => {
+        try {
+            const result = await updateUserDonationItem(donationId, updateData);
+            if (result.success) loadDonations();
+            else alert(`기부 물품 수정 실패: ${result.error.message}`);
+        } catch {
+            alert('기부 물품 수정 중 오류가 발생했습니다.');
+        }
     };
 
     // 기부 물품 삭제
@@ -49,5 +67,5 @@ export const useUserDonations = () => {
         }
     };
 
-    return { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete };
+    return { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete, handleUpdate };
 };

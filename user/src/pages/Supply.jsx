@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Box, Alert, Tabs, Tab } from '@mui/material';
 import { RequestDetailDialog } from '../components/dialogs/RequestDetailDialog';
 import { AcceptedDialog } from '../components/dialogs/AcceptedDialog';
@@ -6,7 +6,8 @@ import { LoadingState } from "../components/common/LoadingState";
 import { ErrorState } from '../components/common/ErrorState.jsx';
 import { EmptyState } from "../components/common/EmptyState.jsx";
 import { useReliefRequests } from "../hooks/useReliefRequests";
-import { filterRequestsByMatching } from "../utils/requestUtils";
+import { generateRecommendations } from "../utils/recommendationUtils";
+import { useAuthStore } from "../store/authStore";
 import RequestList from "../components/supply/RequestList.jsx";
 import RecommandList from "../components/supply/RecommandList.jsx";
 
@@ -15,6 +16,8 @@ export default function Supply() {
         allRequests, userDonations, loading, error, supplying,
         loadAllRequests, handleAccept
     } = useReliefRequests();
+
+    const { user } = useAuthStore();
 
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -41,13 +44,36 @@ export default function Supply() {
         } catch (err) { alert(`접수 실패: ${err.message}`); }
     };
 
+    // 추천 목록 생성 (메모이제이션으로 최적화)
+    const recommendedRequests = useMemo(() => {
+        if (!allRequests.length || !userDonations.length) return [];
+
+        // 사용자가 기부 물품을 등록한 경우에만 추천
+        const hasValidDonations = userDonations.some(d => d.item_name && d.quantity > 0);
+        if (!hasValidDonations) return [];
+
+        // 사용자 정보 (주소 좌표 포함)
+        const userInfo = user ? {
+            coordinates: user.coordinates || null,
+            road_address: user.road_address || null
+        } : null;
+
+        // 추천 알고리즘 실행
+        const recommendations = generateRecommendations(allRequests, userInfo, userDonations);
+
+        // 보유 물품과 매칭되고 점수가 일정 이상인 것만 필터링
+        // scoreDetails.itemMatchScore가 0보다 큰 경우만 (실제로 보유한 물품과 매칭되는 경우)
+        return recommendations.filter(req =>
+            req.scoreDetails &&
+            req.scoreDetails.itemMatchScore > 0 &&
+            req.matchingScore >= 0.4 // 기준 하향 조정 (보유 물품 매칭 필수이므로)
+        );
+    }, [allRequests, userDonations, user]);
+
     // 로딩 상태
     if (loading) return <LoadingState message="구호품 요청을 불러오는 중..." />;
     // 에러 상태
     if (error) return <ErrorState error={error} onRetry={loadAllRequests} />;
-
-    // 매칭된 요청 필터링
-    const { matched: matchedRequests } = filterRequestsByMatching(allRequests, userDonations);
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -65,11 +91,12 @@ export default function Supply() {
                     ? (allRequests.length === 0
                         ? <EmptyState title="등록된 정보가 없습니다" description="아직 등록된 구호품이 없어요." />
                         : <RequestList requests={allRequests} onRequestClick={handleRequestClick} />)
-                    : (matchedRequests.length === 0
-                        ? <EmptyState 
-                            title="등록된 정보가 없습니다" 
-                            description={`내 정보 페이지에서
-                        기부할 구호품을 등록해주세요.`} 
+                    : (recommendedRequests.length === 0
+                        ? <EmptyState
+                            title="추천할 수 있는 구호품이 없습니다"
+                            description={userDonations.length === 0
+                                ? "내 정보 페이지에서 기부할 구호품을 먼저 등록해주세요."
+                                : "현재 매칭되는 구호품 요청이 없습니다."}
                         />
                         : (
                             <>
@@ -79,7 +106,7 @@ export default function Supply() {
                                 >
                                     매칭된 구호품은 가장 가까운 대피소와 우선 순위에 따라 정렬되었습니다.
                                 </Alert>
-                                <RecommandList requests={matchedRequests} onRequestClick={handleRequestClick} />
+                                <RecommandList requests={recommendedRequests} onRequestClick={handleRequestClick} />
                             </>
                         ))
                 }

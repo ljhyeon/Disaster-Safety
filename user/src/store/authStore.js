@@ -42,28 +42,45 @@ export const useAuthStore = create(
         const unsubscribe = onAuthStateChange(async (firebaseUser) => {
           if (firebaseUser && firebaseUser.email) {
             // Firebase User 정보와 Firestore 유저 정보 통합
-            const currentUser = get().user;
             let userData = {
               uid: firebaseUser.uid,
+              user_id: firebaseUser.uid, // Firestore 필드명과 일치
               email: firebaseUser.email,
               displayName: firebaseUser.displayName,
               emailVerified: firebaseUser.emailVerified
             };
-            
-            // 이미 persist된 정보가 있고 주소 정보가 있으면 사용
-            if (currentUser && currentUser.road_address) {
-              userData = { ...userData, ...currentUser };
-            } else {
-              // Firestore에서 최신 정보 불러오기
-              console.log('Loading user data from Firestore for:', firebaseUser.email);
-              const result = await getUser(firebaseUser.email);
-              console.log('Firestore getUser result:', result);
-              if (result.success && result.user) {
-                userData = { ...userData, ...result.user };
-                console.log('Final user data:', userData);
+
+            // 항상 Firestore에서 최신 정보 불러오기
+            const result = await getUser(firebaseUser.email);
+
+            if (result.success && result.user) {
+              // Firestore 데이터와 병합
+              userData = {
+                ...userData,
+                ...result.user,
+                // 필드명 매핑 (snake_case를 유지)
+                road_address: result.user.road_address,
+                address_detail: result.user.address_detail,
+                phone_number: result.user.phone_number,
+                zipcode: result.user.zipcode,
+                name: result.user.name || userData.displayName
+              };
+            } else if (!result.success && result.error?.code === 'user-not-found') {
+              // 사용자 문서가 없으면 생성
+              const { createUser } = await import('../services/userService');
+              const createResult = await createUser({
+                uid: firebaseUser.uid,
+                user_id: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                userType: 'general_user'
+              });
+
+              if (createResult.success) {
+                userData = { ...userData, ...createResult.user };
               }
             }
-            
+
             set({ user: userData, isAuthenticated: true, isLoading: false, error: null });
           } else {
             set({ user: null, isAuthenticated: false, isLoading: false, error: null });

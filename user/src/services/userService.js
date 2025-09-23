@@ -6,7 +6,8 @@ import { FIREBASE_USER_FIELDS, USER_TYPES } from '../constants/firebaseFields';
 // 유틸리티 함수들
 const validateUserData = (userData) => {
   const { uid, email, displayName, userType } = userData;
-  if (!uid || !email || !displayName || !userType) throw new Error('필수 필드가 누락되었습니다.');
+  const userId = userData.user_id || userData.uid;
+  if (!userId || !email || !displayName || !userType) throw new Error('필수 필드가 누락되었습니다.');
   if (!Object.values(USER_TYPES).includes(userType)) throw new Error('올바르지 않은 사용자 타입입니다.');
 };
 
@@ -17,6 +18,7 @@ const validatePublicOfficerCert = (userType, certFile) => {
 const createUserDocument = (userData) => {
   const {
     uid,
+    user_id,
     email,
     displayName,
     userType,
@@ -29,7 +31,7 @@ const createUserDocument = (userData) => {
   } = userData;
   const now = new Date().toISOString();
   return {
-    [FIREBASE_USER_FIELDS.USER_ID]: uid || null,
+    [FIREBASE_USER_FIELDS.USER_ID]: user_id || uid || null,
     [FIREBASE_USER_FIELDS.EMAIL]: email || null,
     [FIREBASE_USER_FIELDS.USER_TYPE]: 'general_user', // 기본값 설정
     [FIREBASE_USER_FIELDS.NAME]: displayName || null,
@@ -74,12 +76,42 @@ export const getUser = async (email) => {
   }
 };
 
-// 사용자 정보 업데이트
+// 사용자 정보 업데이트 (문서가 없으면 생성)
 export const updateUser = async (email, updateData) => {
   try {
-    const updatedData = createUpdateDocument(updateData);
-    await updateDoc(doc(db, 'users', email), updatedData);
-    return { success: true, user: updatedData };
+    const userRef = doc(db, 'users', email);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      // 문서가 없으면 새로 생성
+      console.log('사용자 문서가 없어서 새로 생성합니다:', email);
+
+      // updateData가 이미 FIREBASE_USER_FIELDS 형식이면 그대로 사용
+      const now = new Date().toISOString();
+      const newUserData = {
+        [FIREBASE_USER_FIELDS.USER_ID]: updateData[FIREBASE_USER_FIELDS.USER_ID] || updateData.uid || email,
+        [FIREBASE_USER_FIELDS.EMAIL]: email,
+        [FIREBASE_USER_FIELDS.USER_TYPE]: updateData[FIREBASE_USER_FIELDS.USER_TYPE] || 'general_user',
+        [FIREBASE_USER_FIELDS.NAME]: updateData[FIREBASE_USER_FIELDS.NAME] || updateData.displayName || email.split('@')[0],
+        [FIREBASE_USER_FIELDS.PHONE_NUMBER]: updateData[FIREBASE_USER_FIELDS.PHONE_NUMBER] || null,
+        [FIREBASE_USER_FIELDS.ZIPCODE]: updateData[FIREBASE_USER_FIELDS.ZIPCODE] || null,
+        [FIREBASE_USER_FIELDS.ROAD_ADDRESS]: updateData[FIREBASE_USER_FIELDS.ROAD_ADDRESS] || null,
+        [FIREBASE_USER_FIELDS.ADDRESS_DETAIL]: updateData[FIREBASE_USER_FIELDS.ADDRESS_DETAIL] || null,
+        [FIREBASE_USER_FIELDS.CERTIFICATE_FILE]: updateData[FIREBASE_USER_FIELDS.CERTIFICATE_FILE] || null,
+        [FIREBASE_USER_FIELDS.PREFERRED_CATEGORIES]: updateData[FIREBASE_USER_FIELDS.PREFERRED_CATEGORIES] || null,
+        [FIREBASE_USER_FIELDS.CREATED_AT]: now,
+        [FIREBASE_USER_FIELDS.UPDATED_AT]: now,
+        [FIREBASE_USER_FIELDS.LAST_LOGIN_AT]: null
+      };
+
+      await setDoc(userRef, newUserData);
+      return { success: true, user: newUserData };
+    } else {
+      // 문서가 있으면 업데이트
+      const updatedData = createUpdateDocument(updateData);
+      await updateDoc(userRef, updatedData);
+      return { success: true, user: updatedData };
+    }
   } catch (error) {
     console.error('사용자 업데이트 실패:', error);
     return { success: false, error: { code: error.code || 'user-update-failed', message: error.message || '사용자 정보 업데이트 중 오류가 발생했습니다.' } };
