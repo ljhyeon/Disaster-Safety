@@ -1,20 +1,80 @@
-import { useState } from 'react';
-import { Table, Tag, Button, Typography, Space, Select, Input, Modal } from 'antd';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Table, Tag, Button, Typography, Space, Select, Input, Modal, Spin, message } from 'antd';
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
 import { Modify } from '../components/modals/Modify';
-import { managingData } from '../dummydata/managingData';
+import AddInventoryItemForm from '../components/forms/AddInventoryItemForm';
+import {
+    getShelterInventory,
+    updateInventoryItem,
+    addInventoryItem,
+    getInventoryStatistics
+} from '../services/inventoryService';
+import { RELIEF_CATEGORIES, RELIEF_SUBCATEGORIES } from '../services/reliefService';
 
 const ReliefSuppliesManagement = () => {
-    // 더미 데이터
-    const [data, setData] = useState(managingData);
+    const { id: shelterId } = useParams();
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [statistics, setStatistics] = useState(null);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // 통계 계산
-    const totalCount = data.length;
-    const unInspectedCount = data.filter(d => d.checkStatus === '미검수').length;
-    const inspectedCount = data.filter(d => d.checkStatus === '검수완료').length;
-    const mismatchCount = data.filter(d => d.receiveStatus === '불일치').length;
+    const criticalCount = data.filter(d => d.urgencyLevel === '높음').length;
+    const warningCount = data.filter(d => d.urgencyLevel === '중간').length;
+    const sufficientCount = data.filter(d => d.urgencyLevel === '낮음').length;
+    const totalDeficit = data.reduce((sum, item) => sum + (item.deficitQuantity || 0), 0);
+
+    useEffect(() => {
+        loadInventory();
+    }, [shelterId]);
+
+    const loadInventory = async () => {
+        if (!shelterId) return;
+
+        setLoading(true);
+        try {
+            const [inventoryResult, statsResult] = await Promise.all([
+                getShelterInventory(shelterId),
+                getInventoryStatistics(shelterId)
+            ]);
+
+            if (inventoryResult.success) {
+                const inventoryItems = inventoryResult.inventory.itemsArray || [];
+
+                // 테이블 데이터 형식으로 변환
+                const formattedData = inventoryItems.map((item, index) => ({
+                    key: item.key || `item_${index}`,
+                    suppliesName: item.item_name,
+                    category: item.category,
+                    subcategory: item.subcategory,
+                    urgencyLevel: item.urgencyLevel,
+                    currentQuantity: item.current_quantity || 0,
+                    expectedQuantity: item.minimum_required || 0,
+                    deficitQuantity: item.deficitQuantity || 0,
+                    fulfillmentRate: item.fulfillmentRate,
+                    unit: item.unit,
+                    maximum_capacity: item.maximum_capacity
+                }));
+
+                setData(formattedData);
+            } else {
+                message.error(inventoryResult.error?.message || '재고 데이터를 불러오는데 실패했습니다.');
+            }
+
+            if (statsResult.success) {
+                setStatistics(statsResult.statistics);
+            }
+        } catch (error) {
+            console.error('Error loading inventory:', error);
+            message.error('재고 데이터를 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // 긴급도 태그 색상
     const getUrgencyColor = (level) => {
@@ -112,7 +172,6 @@ const ReliefSuppliesManagement = () => {
     const [selectedItem, setSelectedItem] = useState(null);
 
     const openModal = (record) => {
-        console.log(record)
         setSelectedItem(record);
         setIsModalOpen(true);
     };
@@ -121,52 +180,138 @@ const ReliefSuppliesManagement = () => {
         setIsModalOpen(false);
         setSelectedItem(null);
     };
+
+    const handleUpdateItem = async (updatedData) => {
+        if (!selectedItem) return;
+
+        try {
+            const itemKey = selectedItem.key;
+            const updateData = {
+                current_quantity: updatedData.currentQuantity,
+                minimum_required: updatedData.expectedQuantity,
+                maximum_capacity: updatedData.maximum_capacity,
+                updated_by: 'admin'
+            };
+
+            const result = await updateInventoryItem(shelterId, itemKey, updateData);
+
+            if (result.success) {
+                message.success('재고 정보가 업데이트되었습니다.');
+                await loadInventory();
+            } else {
+                message.error(result.error?.message || '재고 업데이트에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            message.error('재고 업데이트 중 오류가 발생했습니다.');
+        }
+
+        closeModal();
+    };
+
+    const handleAddItem = async (itemData) => {
+        try {
+            const result = await addInventoryItem(shelterId, itemData);
+
+            if (result.success) {
+                message.success('새 재고 항목이 추가되었습니다.');
+                await loadInventory();
+            } else {
+                message.error(result.error?.message || '재고 항목 추가에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Add item error:', error);
+            message.error('재고 항목 추가 중 오류가 발생했습니다.');
+        }
+
+        setIsAddModalOpen(false);
+    };
+
+    if (loading) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '50vh'
+            }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
     
     return (
         <>
-            <Title level={1}>현재 구호품 재고 관리</Title>
-            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <Title level={1} style={{ margin: 0 }}>현재 구호품 재고 관리</Title>
+                <Space>
+                    <Button
+                        icon={<ReloadOutlined />}
+                        onClick={loadInventory}
+                    >
+                        새로고침
+                    </Button>
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsAddModalOpen(true)}
+                    >
+                        항목 추가
+                    </Button>
+                </Space>
+            </div>
+
             {/* 상태 통계 태그들 */}
             <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-                <Tag style={{ 
-                    color: '#374151', 
+                <Tag style={{
+                    color: '#374151',
                     backgroundColor: '#F3F4F6',
                     border: 'none',
                     borderRadius: 8,
                     padding: '4px 12px',
                     fontSize: '14px'
                 }}>
-                    총 {totalCount}건
+                    총 {data.length}건
                 </Tag>
-                <Tag style={{ 
-                    color: '#B91C1C', 
+                <Tag style={{
+                    color: '#B91C1C',
                     backgroundColor: '#FEE2E2',
                     border: 'none',
                     borderRadius: 8,
                     padding: '4px 12px',
                     fontSize: '14px'
                 }}>
-                    미검수: {unInspectedCount}건
+                    긴급: {criticalCount}건
                 </Tag>
-                <Tag style={{ 
-                    color: '#15803D', 
-                    backgroundColor: '#DCFCE7',
-                    border: 'none',
-                    borderRadius: 8,
-                    padding: '4px 12px',
-                    fontSize: '14px'
-                }}>
-                    검수완료: {inspectedCount}건
-                </Tag>
-                <Tag style={{ 
-                    color: '#A16207', 
+                <Tag style={{
+                    color: '#A16207',
                     backgroundColor: '#FEF9C3',
                     border: 'none',
                     borderRadius: 8,
                     padding: '4px 12px',
                     fontSize: '14px'
                 }}>
-                    수량 불일치: {mismatchCount}건
+                    주의: {warningCount}건
+                </Tag>
+                <Tag style={{
+                    color: '#15803D',
+                    backgroundColor: '#DCFCE7',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '4px 12px',
+                    fontSize: '14px'
+                }}>
+                    충분: {sufficientCount}건
+                </Tag>
+                <Tag style={{
+                    color: '#6B21A8',
+                    backgroundColor: '#F3E8FF',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '4px 12px',
+                    fontSize: '14px'
+                }}>
+                    총 부족: {totalDeficit}개
                 </Tag>
             </div>
 
@@ -197,11 +342,24 @@ const ReliefSuppliesManagement = () => {
                 isModalOpen={isModalOpen}
                 closeModal={closeModal}
                 selectedItem={selectedItem}
-                handleSubmit={()=>{
-                    // 추가 제출 로직 필요
-                    closeModal();
-                }}
+                handleSubmit={handleUpdateItem}
             />
+
+            {/* 항목 추가 모달 */}
+            <Modal
+                title="새 재고 항목 추가"
+                open={isAddModalOpen}
+                onCancel={() => setIsAddModalOpen(false)}
+                footer={null}
+                width={600}
+            >
+                <AddInventoryItemForm
+                    onSubmit={handleAddItem}
+                    onCancel={() => setIsAddModalOpen(false)}
+                    categories={RELIEF_CATEGORIES}
+                    subcategories={RELIEF_SUBCATEGORIES}
+                />
+            </Modal>
         </>
     );
 };

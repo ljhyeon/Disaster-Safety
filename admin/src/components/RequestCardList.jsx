@@ -2,7 +2,7 @@ import { useState } from 'react';
 import RequestCard from './RequestCard';
 import { Pagination } from 'antd';
 
-export const RequestCardList = ({ data, pageSize = 6 }) => {
+export const RequestCardList = ({ data, pageSize = 6, onDelete }) => {
     const [currentPage, setCurrentPage] = useState(1);
 
     const startIdx = (currentPage - 1) * pageSize;
@@ -12,7 +12,7 @@ export const RequestCardList = ({ data, pageSize = 6 }) => {
     return (
         <div style={{ width: '100%' }}>
             {currentData.map((item, idx) => (
-                <RequestCard key={item.id || idx} data={item} />
+                <RequestCard key={item.id || idx} data={item} onDelete={onDelete} />
             ))}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>

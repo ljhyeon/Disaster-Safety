@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 
 // Firebase 설정 객체 - 환경변수에서 가져옴
 const firebaseConfig = {
@@ -11,6 +12,7 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}-default-rtdb.asia-southeast1.firebasedatabase.app`
 };
 
 // Firebase 앱 초기화
@@ -21,6 +23,9 @@ export const auth = getAuth(app);
 
 // Firestore 인스턴스 생성
 export const db = getFirestore(app);
+
+// Realtime Database 인스턴스 생성
+export const realtimeDb = getDatabase(app);
 
 // 기본 앱 내보내기
 export default app; 

@@ -42,7 +42,8 @@ function AppContent() {
 }
 
 function App() {
-  const { initializeAuth, isLoading } = useAuthStore();
+  const initializeAuth = useAuthStore(state => state.initializeAuth);
+  const isLoading = useAuthStore(state => state.isLoading);
 
   useEffect(() => {
     const unsubscribe = initializeAuth();

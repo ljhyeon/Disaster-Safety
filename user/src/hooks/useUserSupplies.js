@@ -30,15 +30,19 @@ export const useUserSupplies = () => {
         try {
             const result = await updateSupplyTracking(supplyId, trackingData);
             if (result.success) {
-                alert('송장번호가 등록되었습니다.');
-                loadSupplies();
+                let message = '송장번호가 등록되었습니다.';
+
+                alert(message);
+                await loadSupplies(); // await 추가하여 데이터 로드 완료를 기다림
                 return { success: true };
             } else {
                 alert(`송장번호 등록 실패: ${result.error.message}`);
+                return { success: false };
             }
         } catch (err) {
             alert('송장번호 등록 중 오류가 발생했습니다.');
             console.error('송장번호 등록 실패:', err);
+            return { success: false };
         } finally {
             setSubmitting(false);
         }

@@ -47,10 +47,11 @@ export const getStatusInfo = (status) => {
         case '배송중':
         case 'shipped':
             return { backgroundColor: '#EFF6FF', color: '#1428A0', label: '배송중' };
+        case 'inspected':
         case 'delivered':
-            return { color: 'success', label: '전달완료' };
+            return { backgroundColor: '#DCFCE7', color: '#15803D', label: '기부 완료' };
         case 'cancelled':
-            return { color: 'error', label: '취소됨' };
+            return { backgroundColor: '#FEE2E2', color: '#B91C1C', label: '취소됨' };
         default:
             return { color: 'default', label: status };
     }

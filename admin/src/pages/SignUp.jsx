@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { Layout, Input, Button, Form, Space, message, Upload, Checkbox } from 'antd';
+import { Layout, Input, Button, Form, Space, message, Upload } from 'antd';
 import { Logo } from '../components/login/Logo';
 import { COLORS } from '../styles/colors';
-// import { signUp } from '../services/authService'
-// import { USER_TYPES } from '../services/userService'
+import { signUp } from '../services/authService'
+import { USER_TYPES } from '../constants/firebaseFields';
 import { useLoading } from '../hooks/useLoading';
 
 const { Content } = Layout;
@@ -13,37 +13,28 @@ const SignUp = () => {
     const { isLoading, withLoading } = useLoading();
 
     const onSignUp = async (values) => {
-        const { email, password, displayName, termsAgreed, file } = values;
+        const { email, password, displayName, file } = values;
         
-        // 이용약관 동의 확인
-        if (!termsAgreed) {
-            message.error('이용약관에 동의해주세요.');
-            return;
-        }
-        
-        // 관리자 승인 안내 팝업 표시
-        alert('관리자 승인 후 회원가입 처리됩니다.');
-        navigate('/login');
-        
-        // 기존 회원가입 코드 (주석 처리)
-        /*
-        // 공무원 인증서 파일 확인 (현재는 업로드된 파일명만 저장)
-         await withLoading(async () => {
-            // 공무원 인증서 파일 확인 (현재는 업로드된 파일명만 저장)
+        await withLoading(async () => {
+            // 공무원 인증서 파일 확인 (실제 업로드는 하지 않고 파일명만 저장)
             let certFile = null
             if (file && file.length > 0) {
-                certFile = file[0].name // 추후 Storage URL로 변경 예정
+                certFile = file[0].name // 파일명만 저장 (실제 업로드 없음)
             }
             
             try {
-                // 공무원으로 회원가입
+                // 공무원으로 회원가입 (user_type 고정)
                 const result = await signUp(
                     email, 
                     password, 
                     displayName, 
-                    USER_TYPES.PUBLIC_OFFICER, 
-                    termsAgreed,
-                    certFile
+                    USER_TYPES.PUBLIC_OFFICER, // user_type 고정
+                    null, // phoneNumber
+                    null, // zipcode
+                    null, // roadAddress
+                    null, // addressDetail
+                    certFile, // certificate_file
+                    null // preferredCategories
                 )
                 
                 if (result.success) {
@@ -60,7 +51,6 @@ const SignUp = () => {
                 throw error
             }
         })
-        */
     }
 
     return (
@@ -143,21 +133,6 @@ const SignUp = () => {
                                 전자서명인증서 선택 (공무원 인증용)
                             </Button>
                         </Upload>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="termsAgreed"
-                        valuePropName="checked"
-                        rules={[
-                            {
-                                validator: (_, value) =>
-                                    value ? Promise.resolve() : Promise.reject(new Error('이용약관에 동의해주세요.')),
-                            },
-                        ]}
-                    >
-                        <Checkbox disabled={isLoading}>
-                            이용약관 및 개인정보처리방침에 동의합니다. (필수)
-                        </Checkbox>
                     </Form.Item>
 
                     <Form.Item style={{ marginTop: '2rem', marginBottom: 0 }}>

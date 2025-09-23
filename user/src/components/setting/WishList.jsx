@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import WishItem from './WishItem';
 
-const WishList = ({ donations, handleDelete }) => {
+const WishList = ({ donations, handleDelete, handleUpdate }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', }}>
             {donations.map((donation) => (
@@ -9,6 +9,7 @@ const WishList = ({ donations, handleDelete }) => {
                     key={donation.id}
                     donation={donation}
                     handleDelete={handleDelete}
+                    handleUpdate={handleUpdate}
                 />
             ))}
         </Box>

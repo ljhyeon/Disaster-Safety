@@ -12,26 +12,31 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { createUser, getUser } from './userService';
+import { FIREBASE_USER_FIELDS, USER_TYPES } from '../constants/firebaseFields';
 
 // 회원가입 (사용자 정보와 함께)
-export const signUp = async (email, password, displayName = '', userType, termsAgreed = false, certFile = null) => {
+export const signUp = async (email, password, name, userType, phoneNumber = null, zipcode = null, roadAddress = null, addressDetail = null, certificateFile = null, preferredCategories = null) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
     // 사용자 프로필 업데이트 (displayName 설정)
-    if (displayName) {
-      await updateProfile(user, { displayName });
+    if (name) {
+      await updateProfile(user, { displayName: name });
     }
-    
+
     // Firestore에 사용자 정보 저장
     const userCreateResult = await createUser({
       uid: user.uid,
       email: user.email,
-      displayName: displayName,
+      name: name,
       userType: userType,
-      termsAgreed: termsAgreed,
-      certFile: certFile
+      phoneNumber: phoneNumber,
+      zipcode: zipcode,
+      roadAddress: roadAddress,
+      addressDetail: addressDetail,
+      certificateFile: certificateFile,
+      preferredCategories: preferredCategories
     });
     
     if (!userCreateResult.success) {
@@ -45,10 +50,16 @@ export const signUp = async (email, password, displayName = '', userType, termsA
       user: {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || displayName,
+        displayName: user.displayName || name,
         emailVerified: user.emailVerified,
         userType: userType,
-        termsAgreed: termsAgreed
+        name: name,
+        phoneNumber: phoneNumber,
+        zipcode: zipcode,
+        roadAddress: roadAddress,
+        addressDetail: addressDetail,
+        certificateFile: certificateFile,
+        preferredCategories: preferredCategories
       },
       firestoreResult: userCreateResult
     };
@@ -69,8 +80,8 @@ export const signIn = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
-    // Firestore에서 사용자 정보 조회
-    const userDataResult = await getUser(user.uid);
+    // Firestore에서 사용자 정보 조회 (users/{email}에서 조회)
+    const userDataResult = await getUser(user.email);
     let userData = null;
     
     if (userDataResult.success) {
@@ -87,10 +98,17 @@ export const signIn = async (email, password) => {
         displayName: user.displayName,
         emailVerified: user.emailVerified,
         // Firestore 데이터 추가
-        userType: userData?.user_type || null,
-        termsAgreed: userData?.terms_agreed || false,
-        createdAt: userData?.created_at || null,
-        updatedAt: userData?.updated_at || null
+        userType: userData?.[FIREBASE_USER_FIELDS.USER_TYPE] || null,
+        name: userData?.[FIREBASE_USER_FIELDS.NAME] || null,
+        phoneNumber: userData?.[FIREBASE_USER_FIELDS.PHONE_NUMBER] || null,
+        zipcode: userData?.[FIREBASE_USER_FIELDS.ZIPCODE] || null,
+        roadAddress: userData?.[FIREBASE_USER_FIELDS.ROAD_ADDRESS] || null,
+        addressDetail: userData?.[FIREBASE_USER_FIELDS.ADDRESS_DETAIL] || null,
+        certificateFile: userData?.[FIREBASE_USER_FIELDS.CERTIFICATE_FILE] || null,
+        preferredCategories: userData?.[FIREBASE_USER_FIELDS.PREFERRED_CATEGORIES] || null,
+        createdAt: userData?.[FIREBASE_USER_FIELDS.CREATED_AT] || null,
+        updatedAt: userData?.[FIREBASE_USER_FIELDS.UPDATED_AT] || null,
+        lastLoginAt: userData?.[FIREBASE_USER_FIELDS.LAST_LOGIN_AT] || null
       }
     };
   } catch (error) {

@@ -20,6 +20,15 @@ export default function Status() {
         supply.courier_company && supply.tracking_number ? setTrackingViewOpen(true) : setTrackingOpen(true);
     };
 
+    // 송장번호 제출 핸들러 (모달 닫기 포함)
+    const handleSubmitTracking = async (trackingData) => {
+        const result = await handleTrackingSubmit(selectedSupply.id, trackingData);
+        if (result?.success) {
+            setTrackingOpen(false); // 성공 시 모달 닫기
+            setSelectedSupply(null); // 선택된 supply 초기화
+        }
+    };
+
     if (loading) return <LoadingState message="공급 이력을 불러오는 중..." />;
     if (error) return <ErrorState error={error} onRetry={loadSupplies} />;
 
@@ -33,8 +42,11 @@ export default function Status() {
 
             <TrackingDialog
                 open={trackingOpen}
-                onClose={() => setTrackingOpen(false)}
-                onSubmit={(trackingData) => handleTrackingSubmit(selectedSupply.id, trackingData)}
+                onClose={() => {
+                    setTrackingOpen(false);
+                    setSelectedSupply(null);
+                }}
+                onSubmit={handleSubmitTracking}
                 item={selectedSupply?.item_name}
                 quantity={selectedSupply?.supplied_quantity}
                 unit={selectedSupply?.unit}

@@ -1,4 +1,4 @@
-import { useEffect, } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Typography, } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -14,6 +14,7 @@ const ProductList = () => {
     const { id } = useParams();
     const selectedId = useShelterStore((s)=>s.selectedId);
     const setSelectedId = useShelterStore((s)=>s.setSelectedId);
+    const [deletedIds, setDeletedIds] = useState(new Set());
 
     // URL 파라미터의 id를 store에 설정
     useEffect(() => {
@@ -26,10 +27,22 @@ const ProductList = () => {
     const currentShelterId = selectedId || id;
 
     // 구호품 요청 목록 로드
-    const { requests, isLoading } = useReliefRequests(currentShelterId);
+    const { requests, isLoading, refetch } = useReliefRequests(currentShelterId);
+
+    // 삭제된 항목 필터링
+    const filteredRequests = requests.filter(req => !deletedIds.has(req.id));
 
     const handleAdd = () => {
         navigate(`/add/${currentShelterId}`);
+    }
+
+    const handleDelete = (requestId) => {
+        // 삭제된 ID 추가
+        setDeletedIds(prev => new Set([...prev, requestId]));
+        // 데이터 리프레시
+        if (refetch) {
+            refetch();
+        }
     }
 
     // 로딩 중일 때 표시
@@ -56,7 +69,7 @@ const ProductList = () => {
                 구호품 요청 추가
             </Button>
 
-            <RequestCardList cnt={requests.length} data={requests} />
+            <RequestCardList cnt={filteredRequests.length} data={filteredRequests} onDelete={handleDelete} />
         </>
     )
 }

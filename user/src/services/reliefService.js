@@ -116,7 +116,10 @@ export const getAllReliefRequests = async () => {
 };
 
 const fetchAllReliefRequests = async () => {
-  const q = query(collection(db, 'relief_requests'));
+  const q = query(
+    collection(db, 'relief_requests'),
+    where('status', '!=', 'fulfilled')
+  );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs;
 };
@@ -285,9 +288,33 @@ const calculateSupplyStatistics = (supplies) => {
 // 사용자 희망 기부 물품 관련 서비스 함수들
 export const addUserDonationItem = async (userId, itemData) => {
   try {
-    const { item } = itemData;
-    if (!userId || !item) throw new Error('필수 필드가 누락되었습니다.');
-    const donationDoc = { user_id: userId, item_name: item, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'active' };
+    const { item, quantity, category, subcategory, unit } = itemData;
+    if (!userId || !item || !quantity) throw new Error('필수 필드가 누락되었습니다.');
+
+    // 카테고리 정보가 없으면 자동 매칭 (동적 import로 순환 참조 방지)
+    let finalCategory = category;
+    let finalSubcategory = subcategory;
+    let finalUnit = unit || '개';
+
+    if (!category || !subcategory) {
+      const { matchCategory } = await import('./itemCategoryMatcher');
+      const matched = matchCategory(item);
+      finalCategory = category || matched.category;
+      finalSubcategory = subcategory || matched.subcategory;
+      finalUnit = unit || matched.unit;
+    }
+
+    const donationDoc = {
+      user_id: userId,
+      item_name: item,
+      quantity: quantity,
+      category: finalCategory,
+      subcategory: finalSubcategory,
+      unit: finalUnit,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: 'active'
+    };
     const docRef = await addDoc(collection(db, 'user_donations'), donationDoc);
     return { success: true, donation_id: docRef.id, donation: donationDoc };
   } catch (error) {
@@ -308,18 +335,45 @@ export const getUserDonationItems = async (userId) => {
 };
 
 const fetchUserDonations = async (userId) => {
-  const q = query(collection(db, 'user_donations'), where('user_id', '==', userId), where('status', '==', 'active'));
+  // active와 inactive 모두 가져오되, quantity가 0보다 큰 것만
+  const q = query(
+    collection(db, 'user_donations'),
+    where('user_id', '==', userId)
+  );
   const querySnapshot = await getDocs(q);
   const donations = [];
-  querySnapshot.forEach((doc) => donations.push({ id: doc.id, ...doc.data() }));
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    // quantity가 0보다 큰 것만 표시
+    if (data.quantity > 0) {
+      donations.push({ id: doc.id, ...data });
+    }
+  });
   return sortByCreatedAtDesc(donations);
+};
+
+export const updateUserDonationItem = async (donationId, updateData) => {
+  try {
+    if (!donationId) throw new Error('기부 물품 ID가 필요합니다.');
+    const donationRef = doc(db, 'user_donations', donationId);
+
+    await updateDoc(donationRef, {
+      ...updateData,
+      updated_at: new Date().toISOString()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('희망 기부 물품 수정 실패:', error);
+    return { success: false, error: { code: error.code || 'donation-update-failed', message: error.message || '희망 기부 물품 수정 중 오류가 발생했습니다.' } };
+  }
 };
 
 export const deleteUserDonationItem = async (donationId) => {
   try {
     if (!donationId) throw new Error('기부 물품 ID가 필요합니다.');
     const donationRef = doc(db, 'user_donations', donationId);
-    await updateDoc(donationRef, { status: 'inactive', updated_at: new Date().toISOString() });
+    await deleteDoc(donationRef);
     return { success: true };
   } catch (error) {
     console.error('희망 기부 물품 삭제 실패:', error);
@@ -350,15 +404,131 @@ const findMatchingRequests = (requests, donations) => requests.filter(request =>
   )
 );
 
-// 송장번호 등록 서비스
+// 보유 물품 수량 차감 서비스
+export const updateUserDonationQuantity = async (userId, itemName, quantityToDeduct) => {
+  try {
+    if (!userId || !itemName || !quantityToDeduct) throw new Error('필수 필드가 누락되었습니다.');
+
+    // 사용자의 해당 물품 찾기 (수량이 0보다 큰 것)
+    const q = query(
+      collection(db, 'user_donations'),
+      where('user_id', '==', userId),
+      where('item_name', '==', itemName)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.log('매칭되는 기부 물품을 찾을 수 없습니다.');
+      return { success: true }; // 물품이 없어도 성공으로 처리
+    }
+
+    // 수량이 0보다 큰 첫 번째 매칭 물품 찾기
+    let donationDoc = null;
+    for (const doc of querySnapshot.docs) {
+      if (doc.data().quantity > 0) {
+        donationDoc = doc;
+        break;
+      }
+    }
+
+    if (!donationDoc) {
+      console.log('차감 가능한 기부 물품이 없습니다.');
+      return { success: true };
+    }
+    const currentData = donationDoc.data();
+    const newQuantity = Math.max(0, currentData.quantity - quantityToDeduct); // 음수 방지
+
+    // 수량 업데이트 (status는 변경하지 않음)
+    await updateDoc(doc(db, 'user_donations', donationDoc.id), {
+      quantity: newQuantity,
+      updated_at: new Date().toISOString()
+    });
+
+    return { success: true, newQuantity: Math.max(0, newQuantity) };
+  } catch (error) {
+    console.error('보유 물품 수량 업데이트 실패:', error);
+    return { success: false, error: { code: error.code || 'quantity-update-failed', message: error.message || '보유 물품 수량 업데이트 중 오류가 발생했습니다.' } };
+  }
+};
+
+// 송장번호 등록 서비스 (보유 물품 자동 차감 포함)
 export const updateSupplyTracking = async (supplyId, trackingData) => {
   try {
     validateTrackingData(supplyId, trackingData);
+
+    // 공급 정보 가져오기
+    const supplyDoc = await getDoc(doc(db, 'relief_supplies', supplyId));
+    if (!supplyDoc.exists()) throw new Error('공급 정보를 찾을 수 없습니다.');
+
+    const supplyInfo = supplyDoc.data();
+
+    // 송장번호 업데이트
     await updateSupplyWithTracking(supplyId, trackingData);
+
+    // 보유 물품 차감 (supplier_id와 item_name으로 매칭)
+    const quantityToDeduct = supplyInfo.supplied_quantity || supplyInfo.requested_quantity || 0;
+    if (supplyInfo.supplier_id && supplyInfo.item_name && quantityToDeduct > 0) {
+      await updateUserDonationQuantity(
+        supplyInfo.supplier_id,
+        supplyInfo.item_name,
+        quantityToDeduct
+      );
+    }
+
+    // 요청 수량 차감 (request_id로 매칭)
+    if (supplyInfo.request_id && supplyInfo.supplied_quantity) {
+      await updateRequestQuantity(supplyInfo.request_id, supplyInfo.supplied_quantity);
+    }
+
     return { success: true };
   } catch (error) {
     console.error('송장번호 등록 실패:', error);
     return { success: false, error: { code: error.code || 'tracking-update-failed', message: error.message || '송장번호 등록 중 오류가 발생했습니다.' } };
+  }
+};
+
+// 요청 수량 차감 서비스
+const updateRequestQuantity = async (requestId, suppliedQuantity) => {
+  try {
+    const requestRef = doc(db, 'relief_requests', requestId);
+    const requestDoc = await getDoc(requestRef);
+
+    if (!requestDoc.exists()) return;
+
+    const requestData = requestDoc.data();
+    const currentQuantity = requestData.quantity || 0;
+    const newQuantity = Math.max(0, currentQuantity - suppliedQuantity);
+
+    if (newQuantity <= 0) {
+      // 수량이 0이 되면 fulfilled 상태로 변경
+      await updateDoc(requestRef, {
+        quantity: 0,
+        status: 'fulfilled',
+        fulfilled_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      // 수량만 차감
+      await updateDoc(requestRef, {
+        quantity: newQuantity,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    // relief_items 배열도 업데이트
+    if (requestData.relief_items && requestData.relief_items.length > 0) {
+      const updatedItems = requestData.relief_items.map(item => ({
+        ...item,
+        quantity: Math.max(0, (item.quantity || 0) - suppliedQuantity)
+      }));
+
+      await updateDoc(requestRef, {
+        relief_items: updatedItems
+      });
+    }
+  } catch (error) {
+    console.error('요청 수량 업데이트 실패:', error);
   }
 };
 

@@ -4,26 +4,37 @@ import { LoadingState } from '../components/common/LoadingState';
 import { useUserDonations } from '../hooks/useUserDonations';
 import { EmptyState } from "../components/common/EmptyState.jsx";
 import { AddDialog } from '../components/dialogs/AddDialog.jsx';
+import { AddressDialog } from '../components/dialogs/AddressDialog.jsx';
 import WishList from '../components/setting/WishList.jsx';
 import RoomIcon from '@mui/icons-material/Room';
+import EditIcon from '@mui/icons-material/Edit';
+import { useAuthStore } from '../store/authStore';
 
 export default function Setting() {
-    const { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete } = useUserDonations();
+    const { donations, loading, error, submitting, loadDonations, handleSubmit, handleDelete, handleUpdate } = useUserDonations();
     const [open, setOpen] = useState(false); // 기부 물품 Dialog
+    const [addressOpen, setAddressOpen] = useState(false); // 주소 Dialog
+    const { user } = useAuthStore();
 
-    // dummy
-    const road_address = '대구광역시 북구 산격동 123-12';
-    const address_detail = '';
+    // user에서 주소 정보 가져오기
+    const road_address = user?.road_address || user?.roadAddress || '주소 정보가 없습니다';
+    const address_detail = user?.address_detail || user?.addressDetail || '';
 
     if (loading) return <LoadingState message='희망 기부 물품을 불러오는 중...' />;
 
     if (donations.length === 0) {
         return (
             <Box p={2} display='flex' flexDirection='column' justifyContent='space-between' minHeight='100%'>
-            <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px' }}>
+            <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px', position: 'relative' }}>
+                <IconButton
+                    onClick={() => setAddressOpen(true)}
+                    sx={{ position: 'absolute', top: 8, right: 8, padding: 0.5 }}
+                >
+                    <EditIcon sx={{ fontSize: 16 }} />
+                </IconButton>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <RoomIcon sx={{ fontSize: 10, color: '#666666' }} />
-                    <Typography sx={{ fontSize: 10, color: '#666666'}}>{road_address} {address_detail}</Typography>  {/* 대구광역시 북구 산격동 123-12 */}
+                    <Typography sx={{ fontSize: 10, color: '#666666'}}>{road_address} {address_detail}</Typography>
                 </Box>
                 <Typography variant='subtitle1'>내가 보유한 물품 현황</Typography>
                 <Typography variant='body2'>보유 중인 구호품을 확인할 수 있습니다</Typography>
@@ -44,10 +55,19 @@ export default function Setting() {
             <AddDialog
                 open={open}
                 onClose={() => setOpen(false)}
-                onSubmit={async ({ item }) => {
-                        const result = await handleSubmit(item);
+                onSubmit={async (itemData) => {
+                        const result = await handleSubmit(itemData);
                         if (result?.success) setOpen(false);
                     }}
+            />
+
+            {/* 주소 입력 Dialog */}
+            <AddressDialog
+                open={addressOpen}
+                onClose={() => setAddressOpen(false)}
+                onSubmit={() => {
+                    setAddressOpen(false);
+                }}
             />
 
         </Box>
@@ -56,10 +76,16 @@ export default function Setting() {
 
     return (
         <Box p={2}>
-            <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px' }}>
+            <Box sx={{ borderRadius: '12px', border: '1px solid #E5E7EB', p: '16px', position: 'relative' }}>
+                <IconButton
+                    onClick={() => setAddressOpen(true)}
+                    sx={{ position: 'absolute', top: 8, right: 8, padding: 0.5 }}
+                >
+                    <EditIcon sx={{ fontSize: 16 }} />
+                </IconButton>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <RoomIcon sx={{ fontSize: 10, color: '#666666' }} />
-                    <Typography sx={{ fontSize: 10, color: '#666666'}}>{road_address} {address_detail}</Typography>  {/* 대구광역시 북구 산격동 123-12 */}
+                    <Typography sx={{ fontSize: 10, color: '#666666'}}>{road_address} {address_detail}</Typography>
                 </Box>
                 <Typography variant='subtitle1' sx={{ fontWeight: 'bold'}}>내가 보유한 물품 현황</Typography>
                 <Typography variant='body2'>보유 중인 구호품을 확인할 수 있습니다</Typography>
@@ -70,7 +96,7 @@ export default function Setting() {
 
             {/* 기부 물품 리스트 */}
             <Box display="flex" flexDirection="column" gap={1} mb={4}>
-                <WishList donations={donations} handleDelete={handleDelete}/>
+                <WishList donations={donations} handleDelete={handleDelete} handleUpdate={handleUpdate}/>
             </Box>
 
             {/* 기부 물품 추가 버튼 */}
@@ -80,10 +106,19 @@ export default function Setting() {
             <AddDialog
                 open={open}
                 onClose={() => setOpen(false)}
-                onSubmit={async ({ item }) => {
-                        const result = await handleSubmit(item);
+                onSubmit={async (itemData) => {
+                        const result = await handleSubmit(itemData);
                         if (result?.success) setOpen(false);
                     }}
+            />
+
+            {/* 주소 입력 Dialog */}
+            <AddressDialog
+                open={addressOpen}
+                onClose={() => setAddressOpen(false)}
+                onSubmit={() => {
+                    setAddressOpen(false);
+                }}
             />
 
         </Box>

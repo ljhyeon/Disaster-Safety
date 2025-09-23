@@ -30,11 +30,11 @@ export const useAuth = () => {
     };
 
     // 회원가입
-    const handleSignUp = async (email, password, confirmPassword, displayName, termsAgreed) => {
-        if (!validateSignUpForm(email, password, confirmPassword, displayName, termsAgreed)) return;
+    const handleSignUp = async (email, password, confirmPassword, displayName) => {
+        if (!validateSignUpForm(email, password, confirmPassword, displayName)) return;
         setIsLoading(true); setErrorMessage('');
         try {
-            const result = await signUp(email, password, displayName, USER_TYPES.GENERAL_USER, termsAgreed);
+            const result = await signUp(email, password, displayName, USER_TYPES.GENERAL_USER);
             if (result.success) { alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.'); navigate('/login'); }
             else setErrorMessage(result.error.message);
         } catch { setErrorMessage('회원 등록 중 오류가 발생했습니다. 다시 시도해주세요.'); }
@@ -69,9 +69,8 @@ export const useAuth = () => {
     };
 
     // 회원가입 폼 검증
-    const validateSignUpForm = (email, password, confirmPassword, displayName, termsAgreed) => {
+    const validateSignUpForm = (email, password, confirmPassword, displayName) => {
         if (!email || !password || !confirmPassword || !displayName) { setErrorMessage('모든 필드를 입력해주세요.'); return false; }
-        if (!termsAgreed) { setErrorMessage('이용약관에 동의해주세요.'); return false; }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) { setErrorMessage('올바른 이메일 형식을 입력해주세요.'); return false; }
         if (password !== confirmPassword) { setErrorMessage('비밀번호가 일치하지 않습니다.'); return false; }

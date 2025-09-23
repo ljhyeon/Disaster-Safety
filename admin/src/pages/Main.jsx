@@ -1,4 +1,5 @@
 import { Typography, Row, Col, } from 'antd';
+import { useState, useEffect } from 'react';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ShelterStatsGrid } from '../components/shelter/ShelterStatsGrid';
 import NotificationList from '../components/notification/NotificationList';
@@ -8,18 +9,48 @@ import { useShelterStore } from '../store/useShelterStore';
 import { useShelter } from '../hooks/shelter/useShelter';
 import { useReliefStatistics } from '../hooks/relief/useReliefStatistics';
 import { useNotifications } from '../hooks/relief/useNotifications';
+import { getTopNeededItems, getRecentDeliveryNotifications } from '../services/dashboardService';
 
 const { Title, } = Typography;
 
 const Main = () => {
     const selectedId = useShelterStore((s)=>s.selectedId);
+    const [topNeededItems, setTopNeededItems] = useState([]);
+    const [deliveryNotifications, setDeliveryNotifications] = useState([]);
+    const [loadingTopItems, setLoadingTopItems] = useState(true);
 
     const { shelter, isLoading: shelterLoading } = useShelter(selectedId);
     const { statistics, reliefSupplyRate, isLoading: statsLoading } = useReliefStatistics(selectedId);
     const { notifications } = useNotifications(selectedId);
-    
+
+    // 우선 필요 용품과 배송 알림 로드
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            if (!selectedId) return;
+
+            setLoadingTopItems(true);
+            try {
+                // 우선 필요 용품 TOP 5
+                const items = await getTopNeededItems(selectedId);
+                setTopNeededItems(items);
+
+                // 최근 배송 알림
+                const notificationsResult = await getRecentDeliveryNotifications(selectedId);
+                if (notificationsResult.success) {
+                    setDeliveryNotifications(notificationsResult.notifications);
+                }
+            } catch (error) {
+                console.error('대시보드 데이터 로드 실패:', error);
+            } finally {
+                setLoadingTopItems(false);
+            }
+        };
+
+        loadDashboardData();
+    }, [selectedId]);
+
     // 로딩 상태 확인 (필수 데이터만)
-    const isLoading = shelterLoading || statsLoading;
+    const isLoading = shelterLoading || statsLoading || loadingTopItems;
 
     // 선택된 대피소가 없을 때
     if (!selectedId) {
@@ -46,21 +77,16 @@ const Main = () => {
         )
     }
 
-    const dummyItems = [
-        { name: '일회용 붕대', percent: 13 },
-        { name: '컵라면', percent: 17  },
-    ]
-
     return (
         <>
             <Title level={1}>
                 {shelter.shelter_name} - 대피소 내 통계
             </Title>
-            
+
             {/* 기본 통계 */}
-            <ShelterStatsGrid 
-                shelter={shelter} 
-                statistics={statistics} 
+            <ShelterStatsGrid
+                shelter={shelter}
+                statistics={statistics}
                 reliefSupplyRate={reliefSupplyRate}
             />
 
@@ -70,11 +96,11 @@ const Main = () => {
                     <ShelterInfoCard shelter={shelter} />
                 </Col>
                 <Col xs={24} md={12}>
-                    <ReliefInfoCard items={dummyItems ?? []} />
+                    <ReliefInfoCard items={topNeededItems} />
                 </Col>
             </Row>
 
-            <NotificationList title="알림마당" notifications={notifications} />
+            <NotificationList title="알림마당" notifications={deliveryNotifications.length > 0 ? deliveryNotifications : notifications} />
         </>
     )
 }
