@@ -1,15 +1,51 @@
-import { Progress, Typography, Row, Col } from 'antd';
+import { Progress, Typography, Row, Col, Button, message } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
 import { getStatusConfig } from '../utils/requestStatus';
+import { deleteReliefRequest } from '../services/reliefService';
 import '../styles/requestCard.css'
 
 const { Text } = Typography;
 
-const RequestCard = ({ data }) => {
+const RequestCard = ({ data, onDelete }) => {
   const statusConfig = getStatusConfig(data.status, data.progress);
+
+  const handleDelete = async () => {
+    try {
+      const result = await deleteReliefRequest(data.id);
+      if (result.success) {
+        message.success('구호품 요청이 삭제되었습니다.');
+        if (onDelete) {
+          onDelete(data.id);
+        }
+      } else {
+        message.error(result.error?.message || '삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('삭제 실패:', error);
+      message.error('삭제 중 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <>
-      <div className="request-card" style={{ cursor: 'default' }}>
+      <div className="request-card" style={{ cursor: 'default', position: 'relative' }}>
+        <Button
+          type="text"
+          size="small"
+          icon={<CloseOutlined />}
+          onClick={handleDelete}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            color: '#999',
+            fontSize: '12px',
+            padding: '2px',
+            width: '20px',
+            height: '20px',
+            minWidth: '20px'
+          }}
+        />
         <div className="content">
           <Row gutter={16} align="middle">
             <Col span={12}>

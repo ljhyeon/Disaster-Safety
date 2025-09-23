@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Typography, Input, Button, Form, message, Space, Card, Select, Row, Col, InputNumber, Tag, Divider } from 'antd'
+import { Typography, Input, Button, Form, message, Space, Card, Select, Row, Col, InputNumber, Tag, Divider, Spin, Empty } from 'antd'
 import { useShelterStore } from '../store/useShelterStore'
 import { useAuthStore } from '../store/authStore'
 import { createReliefRequest, RELIEF_CATEGORIES, RELIEF_SUBCATEGORIES } from '../services/reliefService'
 import { useAsync } from '../hooks/useAsync';
 import { UNIT_OPTIONS } from '../constants/unitOptions';
 import { PRIORITY_OPTIONS } from '../constants/priorityOptions';
-// 더미데이터
-import { getAIRecommendations } from '../dummydata/getAIRecommendations';
+import { getAIRecommendations } from '../services/disasterRecommendService';
 
 const { Title, Text } = Typography
 const { Option } = Select
@@ -111,7 +110,38 @@ const AddProduct = () => {
 
     const availableSubcategories = getAvailableSubcategories()
 
-    const aiRecommendations = getAIRecommendations()
+    // AI 추천 데이터 상태 관리
+    const [aiRecommendations, setAiRecommendations] = useState(null)
+    const [loadingAI, setLoadingAI] = useState(true)
+    const [usedPredictions, setUsedPredictions] = useState(new Set()) // 사용된 예측 아이템 추적
+
+    // AI 추천 데이터 로드
+    useEffect(() => {
+        const loadRecommendations = async () => {
+            const currentShelterId = selectedId || id
+            if (!currentShelterId) {
+                setLoadingAI(false)
+                return
+            }
+
+            try {
+                setLoadingAI(true)
+                const recommendations = await getAIRecommendations(currentShelterId)
+                setAiRecommendations(recommendations)
+            } catch (error) {
+                console.error('AI 추천 로드 실패:', error)
+                // 기본값 설정
+                setAiRecommendations({
+                    predictions: [],
+                    historicalCases: []
+                })
+            } finally {
+                setLoadingAI(false)
+            }
+        }
+
+        loadRecommendations()
+    }, [selectedId, id])
 
     return (
         <>
@@ -230,21 +260,31 @@ const AddProduct = () => {
             </Form>
 
             {/* AI 추천 정보 */}
-            <Card 
+            <Card
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span>구호품 수요 예측 및 추천 AI 결과</span>
                     </div>
-                } 
+                }
                 style={{ marginTop: '12px' }}
             >
-                <Divider orientation="left" style={{ marginTop: '0px' }}>예측 부족 물자</Divider>
-                
-                <div style={{ marginBottom: '16px' }}>
-                    {aiRecommendations.predictions.map((pred, index) => (
-                        <Card 
+                {loadingAI ? (
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                        <Spin tip="AI 분석 중..." />
+                    </div>
+                ) : !aiRecommendations || (aiRecommendations.predictions.length === 0 && aiRecommendations.historicalCases.length === 0) ? (
+                    <Empty description="추천 데이터가 없습니다" />
+                ) : (
+                    <>
+                        <Divider orientation="left" style={{ marginTop: '0px' }}>예측 부족 물자</Divider>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            {aiRecommendations?.predictions
+                                ?.filter((pred, index) => !usedPredictions.has(index)) // 사용된 아이템 필터링
+                                ?.map((pred, index) => (
+                        <Card
                             key={index}
-                            size="small" 
+                            size="small"
                             style={{ marginBottom: '8px' }}
                             className={pred.priority === 'urgent' ? 'urgent-card' : ''}
                         >
@@ -266,59 +306,42 @@ const AddProduct = () => {
                                         {pred.reason}
                                     </div>
                                 </div>
-                                <Button 
-                                    type="dashed" 
+                                <Button
+                                    type="dashed"
                                     size="small"
                                     onClick={() => {
-                                        // 해당 아이템을 폼에 자동 설정
-                                        const getCategoryKey = (category) => {
-                                            const categoryMap = {
-                                                '식품': 'food',
-                                                '위생용품': 'hygiene', 
-                                                '의료용품': 'medical',
-                                                '생활용품': 'daily',
-                                                '안전용품': 'safety',
-                                                '의류': 'clothing',
-                                                '통신용품': 'communication'
-                                            }
-                                            return categoryMap[category] || 'other'
-                                        }
-                                        
-                                        const categoryKey = getCategoryKey(pred.category)
-                                        const categoryValue = RELIEF_CATEGORIES[categoryKey]
-                                        
-                                        // 해당 카테고리의 첫 번째 서브카테고리를 자동 선택
-                                        const subcategories = RELIEF_SUBCATEGORIES[categoryKey] || {}
-                                        const firstSubcategoryKey = Object.keys(subcategories)[0]
-                                        const subcategoryValue = firstSubcategoryKey ? subcategories[firstSubcategoryKey] : undefined
-                                        
                                         // AI 추천 적용 플래그 설정
                                         setIsAIRecommendationApplied(true)
-                                        
+
+                                        // 카테고리와 서브카테고리 직접 사용
                                         form.setFieldsValue({
-                                            category: categoryValue,
-                                            subcategory: subcategoryValue,
+                                            category: pred.category,
+                                            subcategory: pred.subcategory,
                                             item: pred.item,
                                             quantity: pred.shortage,
                                             unit: pred.unit,
                                             priority: pred.priority
                                         })
-                                        setSelectedCategory(categoryValue)
-                                        message.success('추천 아이템이 폼에 설정되었습니다')
+                                        setSelectedCategory(pred.category)
+
+                                        // 사용된 아이템으로 표시
+                                        setUsedPredictions(prev => new Set([...prev, index]))
+
+                                        message.success('양식이 자동으로 입력되었습니다')
                                     }}
                                 >
-                                    폼에 적용
+                                    자동 양식 입력
                                 </Button>
                             </div>
                         </Card>
-                    ))}
-                </div>
+                            )) || []}
+                        </div>
 
-                <div>
-                    <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>
-                        현재 대피소와 유사한 과거 재난 사례 분석 결과
-                    </Text>
-                    {aiRecommendations.historicalCases.map((case_, index) => (
+                        <div style={{ marginTop: '16px' }}>
+                            <Text style={{ fontSize: '13px', color: '#666', marginBottom: '8px', display: 'block' }}>
+                                현재 대피소와 유사한 과거 재난 사례 분석 결과
+                            </Text>
+                            {aiRecommendations?.historicalCases?.map((case_, index) => (
                         <div key={index} style={{ marginBottom: '8px', padding: '8px', background: '#f9f9f9', borderRadius: '4px' }}>
                             <Text strong style={{ fontSize: '13px' }}>
                                 {case_.location} ({case_.year}년 {case_.disaster})
@@ -329,15 +352,17 @@ const AddProduct = () => {
                                     <Tag key={idx} size="small" style={{ fontSize: '11px' }}>{item}</Tag>
                                 ))}
                             </div>
+                            </div>
+                        )) || []}
                         </div>
-                    ))}
-                </div>
 
-                <div style={{ marginTop: '16px', padding: '8px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '4px' }}>
-                    <Text style={{ fontSize: '12px', color: '#52c41a' }}>
-                        💡 AI 분석 기반으로 예측된 정보입니다. 실제 상황에 맞게 조정해서 사용하세요.
-                    </Text>
-                </div>
+                        <div style={{ marginTop: '16px', padding: '8px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '4px' }}>
+                            <Text style={{ fontSize: '12px', color: '#52c41a' }}>
+                                💡 AI 분석 기반으로 예측된 정보입니다. 실제 상황에 맞게 조정해서 사용하세요.
+                            </Text>
+                        </div>
+                    </>
+                )}
             </Card>
 
             <style jsx>{`

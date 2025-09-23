@@ -347,6 +347,123 @@ export const getReliefSuppliesByShelter = async (shelterId) => {
 };
 
 // 구호품 통계 조회 (OFFC01용)
+// 구호품 요청 삭제
+export const deleteReliefRequest = async (requestId) => {
+  try {
+    // relief_requests 컬렉션에서 문서 삭제
+    await deleteDoc(doc(db, 'relief_requests', requestId));
+
+    return {
+      success: true,
+      message: '구호품 요청이 삭제되었습니다.'
+    };
+  } catch (error) {
+    console.error('구호품 요청 삭제 실패:', error);
+    return {
+      success: false,
+      error: {
+        code: error.code || 'delete-failed',
+        message: error.message || '구호품 요청 삭제 중 오류가 발생했습니다.'
+      }
+    };
+  }
+};
+
+// 대피소별 relief_requests 직접 조회 (ProductList용)
+export const getReliefRequestsDirectly = async (shelterId) => {
+  try {
+    if (!shelterId) {
+      return {
+        success: false,
+        error: {
+          code: 'missing-shelter-id',
+          message: '대피소 ID가 필요합니다.'
+        }
+      };
+    }
+
+    const requestsQuery = query(
+      collection(db, 'relief_requests'),
+      where('shelter_id', '==', shelterId)
+    );
+
+    const requestsSnapshot = await getDocs(requestsQuery);
+
+    const requests = [];
+    requestsSnapshot.forEach((doc) => {
+      requests.push({
+        ...doc.data(),
+        doc_id: doc.id // Firestore 문서 ID 포함
+      });
+    });
+
+    // 클라이언트에서 정렬 (created_at 기준 내림차순)
+    requests.sort((a, b) => new Date(b.created_at || b.updated_at) - new Date(a.created_at || a.updated_at));
+
+    // relief_supplies와의 매칭 정보 가져오기
+    const suppliesQuery = query(
+      collection(db, 'relief_supplies'),
+      where('shelter_id', '==', shelterId)
+    );
+    const suppliesSnapshot = await getDocs(suppliesQuery);
+    const supplies = [];
+    suppliesSnapshot.forEach((doc) => {
+      supplies.push(doc.data());
+    });
+
+    // 요청별 공급 현황 계산
+    const transformedRequests = requests.map(request => {
+      // 관련 공급 찾기
+      const relatedSupplies = supplies.filter(supply =>
+        supply.request_id === request.request_id
+      );
+
+      // 첫 번째 구호품 아이템 정보 사용
+      const firstItem = request.relief_items && request.relief_items[0] ? request.relief_items[0] : {};
+
+      // 전체 요청 및 공급 수량 계산
+      const totalRequested = request.relief_items ?
+        request.relief_items.reduce((sum, item) => sum + (item.quantity || 0), 0) : 0;
+
+      const totalSupplied = relatedSupplies.reduce((sum, supply) =>
+        sum + (supply.supplied_quantity || 0), 0);
+
+      const supplyRate = totalRequested > 0 ?
+        Math.round((totalSupplied / totalRequested) * 100) : 0;
+
+      return {
+        doc_id: request.doc_id,
+        request_id: request.request_id || request.doc_id,
+        shelter_id: request.shelter_id,
+        relief_items: request.relief_items || [],
+        item_name: firstItem.item || '구호품',
+        total_requested: totalRequested,
+        total_supplied: totalSupplied,
+        supply_rate: supplyRate,
+        supply_status: supplyRate >= 100 ? 'completed' :
+                      supplyRate >= 50 ? 'in_progress' : 'pending',
+        created_at: request.created_at,
+        priority: request.priority || 'normal',
+        status: request.status
+      };
+    });
+
+    return {
+      success: true,
+      requests: transformedRequests
+    };
+  } catch (error) {
+    console.error('구호품 요청 직접 조회 실패:', error);
+    return {
+      success: false,
+      error: {
+        code: error.code || 'relief-requests-direct-failed',
+        message: error.message || '구호품 요청 조회 중 오류가 발생했습니다.'
+      }
+    };
+  }
+};
+
 export const getReliefStatistics = async (shelterId, dateRange = 7) => {
   try {
     const endDate = new Date();
@@ -597,7 +714,7 @@ export const getReliefRequestsWithSupplyStatus = async (shelterId) => {
     });
 
     suppliesSnapshot.forEach((doc) => {
-      supplies.push(doc.data());
+      supplies.push({ ...doc.data(), doc_id: doc.id });
     });
 
     // 요청별로 배송 현황 계산

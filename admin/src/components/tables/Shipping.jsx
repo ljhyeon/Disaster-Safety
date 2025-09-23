@@ -65,35 +65,48 @@ export const ShippingTable = ({ data, onOpenModal }) => {
         },
         {
             title: '검수 상태',
-            dataIndex: 'status',
+            dataIndex: 'checkStatus',
             key: 'checkStatus',
             width: 90,
-            render: (status) => {
-                const color = status === '검수완료' ? '#DCFCE7' : '#FEE2E2';
-                const fontColor = status === '검수완료' ? '#166534' : '#991B1B';
-                const checkStatus = status === '검수완료' ? '검수완료' : '미검수';
+            render: (checkStatus) => {
+                const color = checkStatus === '검수완료' ? '#DCFCE7' : '#FEE2E2';
+                const fontColor = checkStatus === '검수완료' ? '#166534' : '#991B1B';
                 return <Tag color={color} style={{ border: 0, borderRadius: 9999, color: fontColor }}>{checkStatus}</Tag>;
             },
         },
         {
             title: '작업',
-            dataIndex: 'status',
             key: 'action',
             width: 100,
-            render: (_, record) =>
-                record.status === '검수완료' ? (
-                    <Button type="primary" size="small" disabled style={{ backgroundColor: '#979797', color: 'white' }}>검수완료</Button>
-                ) : (
-                    <Button 
-                        type="primary" 
-                        danger 
+            render: (_, record) => {
+                const isCompleted = record.checkStatus === '검수완료';
+                const isShipped = record.status === '배송완료';
+
+                if (isCompleted) {
+                    return (
+                        <Button
+                            type="primary"
+                            size="small"
+                            disabled
+                            style={{ backgroundColor: '#979797', color: 'white' }}
+                        >
+                            검수완료
+                        </Button>
+                    );
+                }
+
+                return (
+                    <Button
+                        type="primary"
+                        danger
                         size="small"
                         onClick={() => onOpenModal(record)}
-                        disabled={record.status !== '배송완료'}
+                        disabled={!isShipped}
                     >
                         검수하기
                     </Button>
-                ),
+                );
+            },
         },
     ];
 

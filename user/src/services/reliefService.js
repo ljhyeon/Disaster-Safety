@@ -335,10 +335,20 @@ export const getUserDonationItems = async (userId) => {
 };
 
 const fetchUserDonations = async (userId) => {
-  const q = query(collection(db, 'user_donations'), where('user_id', '==', userId), where('status', '==', 'active'));
+  // active와 inactive 모두 가져오되, quantity가 0보다 큰 것만
+  const q = query(
+    collection(db, 'user_donations'),
+    where('user_id', '==', userId)
+  );
   const querySnapshot = await getDocs(q);
   const donations = [];
-  querySnapshot.forEach((doc) => donations.push({ id: doc.id, ...doc.data() }));
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    // quantity가 0보다 큰 것만 표시
+    if (data.quantity > 0) {
+      donations.push({ id: doc.id, ...data });
+    }
+  });
   return sortByCreatedAtDesc(donations);
 };
 
@@ -399,12 +409,11 @@ export const updateUserDonationQuantity = async (userId, itemName, quantityToDed
   try {
     if (!userId || !itemName || !quantityToDeduct) throw new Error('필수 필드가 누락되었습니다.');
 
-    // 사용자의 해당 물품 찾기
+    // 사용자의 해당 물품 찾기 (수량이 0보다 큰 것)
     const q = query(
       collection(db, 'user_donations'),
       where('user_id', '==', userId),
-      where('item_name', '==', itemName),
-      where('status', '==', 'active')
+      where('item_name', '==', itemName)
     );
 
     const querySnapshot = await getDocs(q);
@@ -414,25 +423,27 @@ export const updateUserDonationQuantity = async (userId, itemName, quantityToDed
       return { success: true }; // 물품이 없어도 성공으로 처리
     }
 
-    // 첫 번째 매칭 물품 업데이트
-    const donationDoc = querySnapshot.docs[0];
-    const currentData = donationDoc.data();
-    const newQuantity = currentData.quantity - quantityToDeduct;
-
-    if (newQuantity <= 0) {
-      // 수량이 0 이하가 되면 비활성화
-      await updateDoc(doc(db, 'user_donations', donationDoc.id), {
-        quantity: 0,
-        status: 'inactive',
-        updated_at: new Date().toISOString()
-      });
-    } else {
-      // 수량만 차감
-      await updateDoc(doc(db, 'user_donations', donationDoc.id), {
-        quantity: newQuantity,
-        updated_at: new Date().toISOString()
-      });
+    // 수량이 0보다 큰 첫 번째 매칭 물품 찾기
+    let donationDoc = null;
+    for (const doc of querySnapshot.docs) {
+      if (doc.data().quantity > 0) {
+        donationDoc = doc;
+        break;
+      }
     }
+
+    if (!donationDoc) {
+      console.log('차감 가능한 기부 물품이 없습니다.');
+      return { success: true };
+    }
+    const currentData = donationDoc.data();
+    const newQuantity = Math.max(0, currentData.quantity - quantityToDeduct); // 음수 방지
+
+    // 수량 업데이트 (status는 변경하지 않음)
+    await updateDoc(doc(db, 'user_donations', donationDoc.id), {
+      quantity: newQuantity,
+      updated_at: new Date().toISOString()
+    });
 
     return { success: true, newQuantity: Math.max(0, newQuantity) };
   } catch (error) {
@@ -456,11 +467,12 @@ export const updateSupplyTracking = async (supplyId, trackingData) => {
     await updateSupplyWithTracking(supplyId, trackingData);
 
     // 보유 물품 차감 (supplier_id와 item_name으로 매칭)
-    if (supplyInfo.supplier_id && supplyInfo.item_name && supplyInfo.supplied_quantity) {
+    const quantityToDeduct = supplyInfo.supplied_quantity || supplyInfo.requested_quantity || 0;
+    if (supplyInfo.supplier_id && supplyInfo.item_name && quantityToDeduct > 0) {
       await updateUserDonationQuantity(
         supplyInfo.supplier_id,
         supplyInfo.item_name,
-        supplyInfo.supplied_quantity
+        quantityToDeduct
       );
     }
 

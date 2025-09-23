@@ -1,12 +1,24 @@
 
-import { Typography, Button, Modal, Form, Input, Space, Row, Col, Alert, Tag } from 'antd';
-import { CloseOutlined, ExclamationCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { useEffect } from 'react';
+import { Typography, Button, Modal, Form, InputNumber, Input } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 
 export const Modify = ({ isModalOpen, closeModal, selectedItem, handleSubmit }) => {
     const [form] = Form.useForm();
+
+    useEffect(() => {
+        if (selectedItem && isModalOpen) {
+            form.setFieldsValue({
+                itemName: selectedItem.suppliesName,
+                currentQuantity: selectedItem.currentQuantity,
+                expectedQuantity: selectedItem.expectedQuantity,
+                unit: selectedItem.unit,
+                maximum_capacity: selectedItem.maximum_capacity
+            });
+        }
+    }, [selectedItem, isModalOpen, form]);
 
     return (
         <Modal
@@ -22,7 +34,7 @@ export const Modify = ({ isModalOpen, closeModal, selectedItem, handleSubmit }) 
                 <Button key="cancel" onClick={closeModal}>
                     취소
                 </Button>,
-                <Button key="confirm" type="primary" onClick={()=>{}}>
+                <Button key="confirm" type="primary" onClick={() => form.submit()}>
                     저장
                 </Button>,
             ]}
@@ -40,30 +52,40 @@ export const Modify = ({ isModalOpen, closeModal, selectedItem, handleSubmit }) 
                 <Form.Item
                     label="구호품명"
                     name="itemName"
-                    rules={[{ required: true, message: "구호품명을 입력해주세요" }]}
                 >
-                    <Input value={selectedItem?.suppliesName} />
+                    <Input disabled />
                 </Form.Item>
                 <Form.Item
                     label="현재 수량"
                     name="currentQuantity"
-                    rules={[{ required: true, message: "현재수량을 입력해주세요" }]}
+                    rules={[
+                        { required: true, message: "현재 수량을 입력해주세요" },
+                        { type: 'number', min: 0, message: '0 이상의 숫자를 입력해주세요' }
+                    ]}
                 >
-                    <Input value={selectedItem?.currentQuantity} />
+                    <InputNumber style={{ width: '100%' }} min={0} />
                 </Form.Item>
                 <Form.Item
-                    label="예상 필요 수량"
+                    label="최소 필요 수량"
                     name="expectedQuantity"
-                    rules={[{ required: true, message: "예상 필요 수량을 입력해주세요" }]}
+                    rules={[
+                        { required: true, message: "최소 필요 수량을 입력해주세요" },
+                        { type: 'number', min: 0, message: '0 이상의 숫자를 입력해주세요' }
+                    ]}
                 >
-                    <Input value={selectedItem?.expectedQuantity} />
+                    <InputNumber style={{ width: '100%' }} min={0} />
                 </Form.Item>
                 <Form.Item
-                    label="기준"
+                    label="단위"
                     name="unit"
-                    rules={[{ required: true, message: "단위를 입력해주세요" }]}
                 >
-                    <Input placeholder='단위를 입력해 주세요. (예: 개, ml 등)' />
+                    <Input disabled />
+                </Form.Item>
+                <Form.Item
+                    label="최대 보관 가능 수량 (선택)"
+                    name="maximum_capacity"
+                >
+                    <InputNumber style={{ width: '100%' }} min={0} placeholder="최대 보관 가능 수량" />
                 </Form.Item>
             </Form>
         </Modal>
